@@ -1,15 +1,8 @@
 'use client';
 
 import React from 'react';
+import type { Message } from '../types';
 import MessageBubble from './MessageBubble';
-
-interface Message {
-  id?: string;
-  role: 'user' | 'assistant';
-  content: string;
-  images?: string[];
-  timestamp?: number;
-}
 
 interface ChatMessagesProps {
   messages: Message[];
