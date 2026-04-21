@@ -28,11 +28,7 @@ export default function ChatPage() {
   }, []);
 
   const handleNewChat = () => {
-    // Reset chat state
-    setMessages([]);
-    setInputValue('');
     setIsIncognito(false);
-    // Don't add to chat list, just reset the current chat
   };
 
   const handleToggleGhost = () => {
