@@ -35,10 +35,15 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
   padding: 20px;
   position: relative;
   overflow: hidden;
   color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* --- VOICE LIGHT EFFECT --- */
@@ -352,11 +357,15 @@ h1 {
   body {
     padding: 0 !important;
     overflow-x: hidden;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
   .container {
     padding: 10px;
     gap: 10px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
 
   h1 {
@@ -380,6 +389,7 @@ h1 {
     left: 0 !important;
     transform: none !important;
     z-index: 20 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
   .container.chat-active .input-section {
@@ -388,6 +398,7 @@ h1 {
     transform: none !important;
     width: 100vw !important;
     bottom: 2px !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
   /* Hide logo on mobile */
