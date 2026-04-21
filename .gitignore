@@ -1,0 +1,24 @@
+# Environment secrets — never commit these
+.env
+.env.local
+helix-app/.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+helix_workspace/
+
+# Node
+node_modules/
+helix-app/node_modules/
+helix-app/.next/
+
+# Logs
+server_out.txt
+server_err.txt
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

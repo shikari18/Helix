@@ -1,0 +1,10 @@
+.learn-root {
+  all: initial;
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+.learn-root * {
+  box-sizing: border-box;
+}

@@ -1,0 +1,34 @@
+
+📱 Mobile Hacking — Android/iOS pentesting, APK analysis, Frida, MobSF
+☁️ Cloud Security — AWS, Azure, GCP misconfigs, IAM exploitation, S3 buckets
+🪟 Active Directory & Windows Attacks — Kerberoasting, Pass the Hash, BloodHound
+📡 Wireless Hacking — WiFi cracking, WPA2, evil twin, Aircrack-ng
+🔬 Digital Forensics — disk imaging, memory dumps, log analysis, artifact recovery
+🔧 Exploit Development — buffer overflows, shellcode, ROP chains, CVE research
+🔄 Reverse Engineering — IDA Pro, Ghidra, binary analysis, crackmes
+🧩 Steganography — hiding data in files, detecting hidden payloads
+🏗️ Red Team vs Blue Team — adversary simulation, detection evasion, SOC operations
+🌐 API Security — broken auth, rate limiting, API fuzzing, REST/GraphQL attacks
+🤖 Scripting for Hackers — Python, Bash, PowerShell automation for attacks
+🧲 Threat Intelligence — IOCs, TTPs, MITRE ATT&CK framework
+📦 Container & DevSecOps — Docker escapes, Kubernetes misconfigs, CI/CD attacks
+🔌 Hardware & IoT Hacking — firmware dumping, UART, JTAG, embedded devices
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cd helix-app && npm run dev
+
+
+
