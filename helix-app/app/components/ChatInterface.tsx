@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ChatMessages from './ChatMessages';
 import InputSection from './InputSection';
 import GhostModeInfo from './GhostModeInfo';
@@ -26,7 +26,7 @@ export default function ChatInterface({
   const [inputValue, setInputValue] = useState('');
   const [chatMode, setChatMode] = useState<'chat' | 'agent'>('chat');
   const [ghostMode, setGhostMode] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement>;
 
   useEffect(() => {
     // Set random greeting
