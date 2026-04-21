@@ -39,7 +39,7 @@ load_dotenv()
 from config.system_prompt import SYSTEM_PROMPT
 from config.model import generate, generate_vision
 
-PORT = int(os.getenv("PORT", 3000))
+PORT = int(os.getenv("PORT", 8000))
 HELIX_WORKSPACE = Path(os.getenv("HELIX_WORKSPACE", "./helix_workspace"))
 HELIX_WORKSPACE.mkdir(parents=True, exist_ok=True)
 

@@ -1,0 +1,44 @@
+services:
+  # Python Backend API
+  - type: web
+    name: helix-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: HELIX_WORKSPACE
+        value: /opt/render/project/src/helix_workspace
+
+  # Next.js Frontend
+  - type: web
+    name: helix-app
+    runtime: node
+    plan: free
+    rootDir: helix-app
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: helix-api
+          property: host
+      - key: NODE_ENV
+        value: production

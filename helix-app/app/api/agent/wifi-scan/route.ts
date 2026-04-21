@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+  ? `https://${process.env.NEXT_PUBLIC_API_URL}`
+  : 'http://localhost:8000'
+
 export async function POST() {
   try {
-    const res = await fetch('http://localhost:8000/api/agent/wifi-scan', {
+    const res = await fetch(`${API_URL}/api/agent/wifi-scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
