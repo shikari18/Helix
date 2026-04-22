@@ -164,6 +164,20 @@ export default function ChatApp() {
       document.removeEventListener('click', handleLinkClick, true)
     }
   }, [])
+
+  const [plan, setPlan] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('helix_plan') || 'free'
+    return 'free'
+  })
+
+  // Re-sync plan if localStorage changes (e.g. from pricing page)
+  useEffect(() => {
+      const interval = setInterval(() => {
+          const current = localStorage.getItem('helix_plan') || 'free'
+          if (current !== plan) setPlan(current)
+      }, 1000)
+      return () => clearInterval(interval)
+  }, [plan])
   const [pageTitle, setPageTitle] = useState(() => {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('helix_user_email') || 'guest'
@@ -192,7 +206,6 @@ export default function ChatApp() {
 
   // ── Rate limiting — per account + per plan ──
   const getPlanLimit = () => {
-    const plan = typeof window !== 'undefined' ? (localStorage.getItem('helix_plan') || 'free') : 'free'
     if (plan === 'ultra') return Infinity
     if (plan === 'proplus') return 100
     if (plan === 'pro') return 30
@@ -451,10 +464,10 @@ export default function ChatApp() {
       const plan = typeof window !== 'undefined' ? (localStorage.getItem('helix_plan') || 'free') : 'free'
       const limitId = (Date.now() + 1).toString()
       const limitMsg = plan === 'free'
-        ? "You've reached your daily limit on the free plan. ⏳ Resets in **24 hours** — or [upgrade to Pro](/pricing) to keep going. 🔐"
+        ? "You've reached your daily limit on the **Free** plan. ⏳ Resets in **19 hours** — or [upgrade to Pro](/pricing) to keep going. 🔐"
         : plan === 'pro'
-        ? "You've hit your **30 daily chats** on Pro. ⏳ Your limit resets in **24 hours** — or [upgrade to Pro+](/pricing) for more. 🔐"
-        : "You've reached your daily limit on Pro+. ⏳ Resets in **24 hours** — or [upgrade to Ultra](/pricing) for unlimited access. 🔐"
+        ? "You've hit your **30 daily chats** on Pro. ⏳ Your limit resets in **19 hours** — or [upgrade to Pro+](/pricing) for more. 🔐"
+        : "You've reached your daily limit on **Pro+**. ⏳ Resets in **19 hours** — or [upgrade to Ultra](/pricing) for unlimited access. 🔐"
       setMessages(prev => [...prev, {
         id: limitId,
         role: 'assistant',
@@ -1085,6 +1098,8 @@ export default function ChatApp() {
                   onChatModeChange={setChatMode}
                   isGhostMode={isGhostMode}
                   onStartGroupChat={startGroupChat}
+                  isMobile={isMobile}
+                  plan={plan}
                 />
               </div>
             </div>
@@ -1117,6 +1132,8 @@ export default function ChatApp() {
                   onChatModeChange={setChatMode}
                   isGhostMode={isGhostMode}
                   onStartGroupChat={startGroupChat}
+                  isMobile={isMobile}
+                  plan={plan}
                 />
               </div>
             </div>
@@ -1227,6 +1244,8 @@ export default function ChatApp() {
                     onAgentExplain={() => { if (agentPrompt) { const m = agentPrompt.originalMessage; setAgentPrompt(null); sendExplain(m) } }}
                     onAgentDismiss={() => setAgentPrompt(null)}
                     onStartGroupChat={startGroupChat}
+                    isMobile={isMobile}
+                    plan={plan}
                   />
                 </div>
               </div>

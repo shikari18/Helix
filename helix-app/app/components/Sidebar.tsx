@@ -480,17 +480,19 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
                 </svg>
                 Settings
               </div>
-              <div 
-                onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}
-                style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-                Download Helix on your PC
-              </div>
+              {!isMobile && (
+                <div 
+                  onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}
+                  style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
+                  onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                  </svg>
+                  Download Helix on your PC
+                </div>
+              )}
               <div 
                 onClick={() => { setDropdownOpen(false); window.open('https://helix.com/learn', '_blank'); }}
                 style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
