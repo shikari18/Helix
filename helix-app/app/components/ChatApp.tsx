@@ -11,17 +11,50 @@ import LandingScreen from './LandingScreen'
 import GhostModeInfo from './GhostModeInfo'
 import ShareModal from './ShareModal'
 import LandingFooter from './LandingFooter'
+import GroupChatInterface from './GroupChatInterface'
 
 const GREETINGS = [
-  'What are we testing today, {name}?',
-  'What should we hack, {name}?',
-  'Where do we start, {name}?',
-  'Got an idea, {name}?',
+  'What are we breaking today, {name}?',
+  'Pick a target, {name}.',
   'Ready to run recon, {name}?',
-  'What are we fuzzing today, {name}?',
   'Which exploit are we testing, {name}?',
   'Ready to pop a shell, {name}?',
+  'Time to enumerate, {name}.',
+  'Drop a target, {name}.',
+  'What\'s the attack surface, {name}?',
+  'Let\'s find some vulns, {name}.',
+  'What are we pwning today, {name}?',
 ]
+
+// Greeting response pools — shuffled per message
+const GREETING_RESPONSES: Record<string, string[]> = {
+  hey: [
+    'hey 👋', 'hey, what\'s up?', 'hey 👀', 'hey! what\'s good?', 'heyyy 👋',
+    'hey, sup?', 'hey there 👋', 'hey! how\'s it going?', 'hey 😎', 'hey, what\'s the move?',
+  ],
+  hi: [
+    'hi 👋', 'hi! how are you?', 'hi there 👋', 'hi, what\'s up?', 'hiiii 👋',
+    'hi! what\'s good?', 'hi 😊', 'hi, how\'s it going?', 'hi! what\'s on your mind?', 'hi 👀',
+  ],
+  yo: [
+    'yo 👋', 'yo, what\'s good?', 'yo! 👀', 'yo, what\'s up?', 'yooo 👋',
+    'yo! how\'s it going?', 'yo 😎', 'yo, what\'s the move?', 'yo! what\'s good?', 'yo, sup?',
+  ],
+  sup: [
+    'sup 👋', 'not much, you?', 'sup! 👀', 'sup, what\'s good?', 'supp 👋',
+    'sup! how\'s it going?', 'sup 😎', 'sup, what\'s the move?', 'sup! what\'s good?', 'sup, all good?',
+  ],
+}
+
+export function getGreetingResponse(message: string): string | null {
+  const trimmed = message.trim().toLowerCase().replace(/[!?.]+$/, '')
+  for (const [key, pool] of Object.entries(GREETING_RESPONSES)) {
+    if (trimmed === key || trimmed === key + ' ' || trimmed.startsWith(key + ' ') && trimmed.length < key.length + 4) {
+      return pool[Math.floor(Math.random() * pool.length)]
+    }
+  }
+  return null
+}
 
 function getUserName() {
   if (typeof window === 'undefined') return 'Shikari'
@@ -50,6 +83,8 @@ export default function ChatApp() {
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stoppedRef = useRef(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+  // Always-current messages ref to avoid stale closures
+  const messagesRef = useRef<Message[]>([])
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [greeting, setGreeting] = useState(randomGreeting)
@@ -60,6 +95,39 @@ export default function ChatApp() {
   const [agentRunning, setAgentRunning] = useState(false)
   // Split view state
   const [splitViewUrl, setSplitViewUrl] = useState<string | null>(null)
+  // Group chat state
+  const [isGroupChat, setIsGroupChat] = useState(false)
+  const [groupChatRoomId, setGroupChatRoomId] = useState<string | null>(null)
+  const [groupChatName, setGroupChatName] = useState('New group chat')
+
+  // Persist group chat state — restore on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedGroupChat = localStorage.getItem('helix_group_chat')
+      const savedRoomId = localStorage.getItem('helix_group_room_id')
+      const savedGroupName = localStorage.getItem('helix_group_name')
+      if (savedGroupChat === 'true' && savedRoomId) {
+        setIsGroupChat(true)
+        setGroupChatRoomId(savedRoomId)
+        setGroupChatName(savedGroupName || 'New group chat')
+        setCurrentChatId(savedRoomId)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (isGroupChat && groupChatRoomId) {
+        localStorage.setItem('helix_group_chat', 'true')
+        localStorage.setItem('helix_group_room_id', groupChatRoomId)
+        localStorage.setItem('helix_group_name', groupChatName)
+      } else {
+        localStorage.removeItem('helix_group_chat')
+        localStorage.removeItem('helix_group_room_id')
+        localStorage.removeItem('helix_group_name')
+      }
+    }
+  }, [isGroupChat, groupChatRoomId, groupChatName])
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -85,7 +153,9 @@ export default function ChatApp() {
   }, [])
   const [pageTitle, setPageTitle] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('helix_page_title') || 'Helix'
+      const email = localStorage.getItem('helix_user_email') || 'guest'
+      const safe = email.replace(/[^a-zA-Z0-9]/g, '_')
+      return localStorage.getItem(`helix_page_title_${safe}`) || 'Helix'
     }
     return 'Helix'
   })
@@ -94,9 +164,29 @@ export default function ChatApp() {
   const userScrolledRef = useRef(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
 
-  // ── Rate limiting — per account ──
-  const LIMIT = 20
-  const RESET_MS = 5 * 60 * 60 * 1000
+  // ── Per-account storage keys ──
+  const getStorageKeys = () => {
+    const email = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_email') || 'guest') : 'guest'
+    const safe = email.replace(/[^a-zA-Z0-9]/g, '_')
+    return {
+      chatStore: `helix_chat_store_${safe}`,
+      chatList: `helix_chat_list_${safe}`,
+      messages: `helix_messages_${safe}`,
+      pageTitle: `helix_page_title_${safe}`,
+    }
+  }
+
+  // ── Rate limiting — per account + per plan ──
+  const getPlanLimit = () => {
+    const plan = typeof window !== 'undefined' ? (localStorage.getItem('helix_plan') || 'free') : 'free'
+    if (plan === 'ultra') return Infinity
+    if (plan === 'proplus') return 100
+    if (plan === 'pro') return 30
+    return 20 // free
+  }
+
+  const LIMIT = getPlanLimit()
+  const RESET_MS = 24 * 60 * 60 * 1000 // 24 hours
 
   const getRateLimitKeys = () => {
     const email = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_email') || 'guest') : 'guest'
@@ -137,6 +227,27 @@ export default function ChatApp() {
     return () => clearInterval(t)
   }, [])
 
+  // Poll every 10s to check if admin has blocked or force-logged out this account
+  useEffect(() => {
+    const poll = setInterval(async () => {
+      const email = typeof window !== 'undefined' ? localStorage.getItem('helix_user_email') : null
+      if (!email) return
+      try {
+        const res = await fetch('/api/auth/check-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        const data = await res.json()
+        if (data.forceLogout) {
+          localStorage.removeItem('helix_logged_in')
+          window.location.href = '/signup?blocked=1'
+        }
+      } catch {}
+    }, 10000)
+    return () => clearInterval(poll)
+  }, [])
+
   // Update browser tab title
   useEffect(() => {
     document.title = pageTitle
@@ -144,31 +255,31 @@ export default function ChatApp() {
 
   // Persist chatStore across refresh
   useEffect(() => {
-    const saved = localStorage.getItem('helix_chat_store')
+    const keys = getStorageKeys()
+    const saved = localStorage.getItem(keys.chatStore)
     if (saved) {
       try { setChatStore(JSON.parse(saved)) } catch {}
     }
-    const savedList = localStorage.getItem('helix_chat_list')
+    const savedList = localStorage.getItem(keys.chatList)
     if (savedList) {
       try { setChatList(JSON.parse(savedList)) } catch {}
     }
   }, [])
 
   useEffect(() => {
-    if (Object.keys(chatStore).length > 0) {
-      localStorage.setItem('helix_chat_store', JSON.stringify(chatStore))
-    }
+    const keys = getStorageKeys()
+    localStorage.setItem(keys.chatStore, JSON.stringify(chatStore))
   }, [chatStore])
 
   useEffect(() => {
-    if (chatList.length > 0) {
-      localStorage.setItem('helix_chat_list', JSON.stringify(chatList))
-    }
+    const keys = getStorageKeys()
+    localStorage.setItem(keys.chatList, JSON.stringify(chatList))
   }, [chatList])
 
   // Persist current messages across refresh
   useEffect(() => {
-    const saved = localStorage.getItem('helix_messages')
+    const keys = getStorageKeys()
+    const saved = localStorage.getItem(keys.messages)
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
@@ -181,15 +292,16 @@ export default function ChatApp() {
   }, [])
 
   useEffect(() => {
+    const keys = getStorageKeys()
     if (messages.length > 0) {
-      localStorage.setItem('helix_messages', JSON.stringify(messages))
-      // Also save to chatStore for the current chat
+      localStorage.setItem(keys.messages, JSON.stringify(messages))
       if (currentChatId) {
         setChatStore(prev => ({ ...prev, [currentChatId]: messages }))
       }
     } else {
-      localStorage.removeItem('helix_messages')
+      localStorage.removeItem(keys.messages)
     }
+    messagesRef.current = messages
   }, [messages, currentChatId])
 
   useEffect(() => {
@@ -243,6 +355,30 @@ export default function ChatApp() {
     if (!text.trim() && images.length === 0) return
     if (checkLimit()) { setIsLimited(true); return }
 
+    // Intercept casual greetings — reply from hardcoded pool, skip API
+    if (images.length === 0) {
+      const greetingReply = getGreetingResponse(text)
+      if (greetingReply) {
+        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, images: [], timestamp: Date.now() }
+        const replyId = (Date.now() + 1).toString()
+        if (!chatActive) {
+          setChatActive(true)
+          if (!isGhostMode) {
+            const newChat: ChatItem = { id: Date.now().toString(), title: 'Quick Hello', pinned: false, timestamp: Date.now() }
+            setChatList(prev => [newChat, ...prev])
+            setCurrentChatId(newChat.id)
+          }
+        }
+        setMessages(prev => [...prev, userMsg])
+        setInputValue('')
+        setIsThinking(true)
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        setIsThinking(false)
+        setMessages(prev => [...prev, { id: replyId, role: 'assistant', content: greetingReply, timestamp: Date.now() }])
+        return
+      }
+    }
+
     // Agent mode intent detection — intercept before API call
     if (chatMode === 'agent' && images.length === 0) {
       const actionType = detectAgentIntent(text)
@@ -272,6 +408,9 @@ export default function ChatApp() {
       timestamp: Date.now(),
     }
 
+    // Snapshot history BEFORE adding the new user message — use ref for latest state
+    const historySnapshot = messagesRef.current.map(m => ({ role: m.role, content: m.content }))
+
     if (!chatActive) {
       setChatActive(true)
       if (!isGhostMode) {
@@ -297,11 +436,17 @@ export default function ChatApp() {
     const newCount = parseInt(localStorage.getItem('hl_c') || '0')
     if (newCount >= LIMIT) {
       setIsLimited(true)
+      const plan = typeof window !== 'undefined' ? (localStorage.getItem('helix_plan') || 'free') : 'free'
       const limitId = (Date.now() + 1).toString()
+      const limitMsg = plan === 'free'
+        ? "You've reached your daily limit on the free plan. ⏳ Resets in **24 hours** — or [upgrade to Pro](/pricing) to keep going. 🔐"
+        : plan === 'pro'
+        ? "You've hit your **30 daily chats** on Pro. ⏳ Your limit resets in **24 hours** — or [upgrade to Pro+](/pricing) for more. 🔐"
+        : "You've reached your daily limit on Pro+. ⏳ Resets in **24 hours** — or [upgrade to Ultra](/pricing) for unlimited access. 🔐"
       setMessages(prev => [...prev, {
         id: limitId,
         role: 'assistant',
-        content: "You've hit the free plan limit of **4 messages**. ⏳ Come back in **5 hours** and you'll get another 4 — or [upgrade your plan](/pricing) to keep going without limits. 🔐",
+        content: limitMsg,
         timestamp: Date.now(),
       }])
       return
@@ -328,14 +473,22 @@ export default function ChatApp() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
-            history: messages.map(m => ({ role: m.role, content: m.content })),
-            userName: typeof window !== 'undefined' ? (localStorage.getItem('helix_user_name') || 'there') : 'there',
+            history: historySnapshot,
+            email: typeof window !== 'undefined' ? (localStorage.getItem('helix_user_email') || '') : '',
+            userName: isGhostMode ? 'there' : (typeof window !== 'undefined' ? (localStorage.getItem('helix_user_name') || 'there') : 'there'),
             agentMode: chatMode === 'agent',
+            ghostMode: isGhostMode,
           }),
           signal: abortController.signal,
         }),
         minDelay,
       ])
+      if (res.status === 403) {
+        // Account blocked — force logout
+        localStorage.removeItem('helix_logged_in')
+        window.location.href = '/signup?blocked=1'
+        return
+      }
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
       if (data.reply) replyText = data.reply
@@ -465,8 +618,9 @@ export default function ChatApp() {
           body: JSON.stringify({
             message: text,
             history: messages.map(m => ({ role: m.role, content: m.content })),
-            userName: typeof window !== 'undefined' ? (localStorage.getItem('helix_user_name') || 'there') : 'there',
+            userName: isGhostMode ? 'there' : (typeof window !== 'undefined' ? (localStorage.getItem('helix_user_name') || 'there') : 'there'),
             agentMode: false,
+            ghostMode: isGhostMode,
           }),
         }),
         minDelay,
@@ -500,7 +654,7 @@ export default function ChatApp() {
       const title = CASUAL_TITLES[Math.floor(Math.random() * CASUAL_TITLES.length)]
       setChatList(prev => prev.map(c => c.id === chatId ? { ...c, title } : c))
       setPageTitle(title)
-      localStorage.setItem('helix_page_title', title)
+      localStorage.setItem(getStorageKeys().pageTitle, title)
       return
     }
 
@@ -514,12 +668,12 @@ export default function ChatApp() {
       const title = (data.title || firstMessage.slice(0, 30)).trim()
       setChatList(prev => prev.map(c => c.id === chatId ? { ...c, title } : c))
       setPageTitle(title)
-      localStorage.setItem('helix_page_title', title)
+      localStorage.setItem(getStorageKeys().pageTitle, title)
     } catch {
       const title = firstMessage.slice(0, 30)
       setChatList(prev => prev.map(c => c.id === chatId ? { ...c, title } : c))
       setPageTitle(title)
-      localStorage.setItem('helix_page_title', title)
+      localStorage.setItem(getStorageKeys().pageTitle, title)
     }
   }, [])
 
@@ -530,6 +684,23 @@ export default function ChatApp() {
     setChatLoadingOverlay(true)
     setTimeout(() => {
       setCurrentChatId(id)
+      
+      // Check if this is a group chat
+      const selectedChat = chatList.find(c => c.id === id)
+      const isGroupChatId = selectedChat?.isGroup === true
+      if (isGroupChatId) {
+        setIsGroupChat(true)
+        setGroupChatRoomId(id)
+        // Load group chat name from chat list
+        const groupChat = chatList.find(c => c.id === id)
+        if (groupChat) {
+          setGroupChatName(groupChat.title)
+        }
+      } else {
+        setIsGroupChat(false)
+        setGroupChatRoomId(null)
+      }
+      
       // Load stored messages for this chat
       const stored = chatStore[id]
       if (stored && stored.length > 0) {
@@ -542,7 +713,7 @@ export default function ChatApp() {
       setSidebarOpen(false)
       setChatLoadingOverlay(false)
     }, 800)
-  }, [currentChatId, chatStore])
+  }, [currentChatId, chatStore, chatList])
 
   const handleRetry = useCallback(async () => {
     const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')
@@ -670,18 +841,22 @@ export default function ChatApp() {
   }, [isThinking, typingMsgId])
 
   const startNewChat = useCallback(() => {
-    if (!chatActive && messages.length === 0) return
+    if (!chatActive && messages.length === 0 && !isGroupChat) return
     setMessages([])
     setChatActive(false)
     setCurrentChatId(null)
     setInputValue('')
     setIsGhostMode(false)
+    setIsGroupChat(false)
+    setGroupChatRoomId(null)
+    setGroupChatName('New group chat')
     setGreeting(randomGreeting())
     setNewChatKey(k => k + 1)
     setPageTitle('Helix')
-    localStorage.removeItem('helix_messages')
-    localStorage.removeItem('helix_page_title')
-  }, [chatActive, messages.length])
+    const keys = getStorageKeys()
+    localStorage.removeItem(keys.messages)
+    localStorage.removeItem(keys.pageTitle)
+  }, [chatActive, messages.length, isGroupChat])
 
   // Wrapped setChatList that triggers new chat if current chat is removed
   const handleSetChatList: React.Dispatch<React.SetStateAction<ChatItem[]>> = useCallback((action) => {
@@ -697,7 +872,7 @@ export default function ChatApp() {
         setGreeting(randomGreeting())
         setNewChatKey(k => k + 1)
         setPageTitle('Helix')
-        localStorage.removeItem('helix_messages')
+        localStorage.removeItem(getStorageKeys().messages)
       }
       return next
     })
@@ -707,10 +882,11 @@ export default function ChatApp() {
 
   const handleLogout = useCallback(() => {
     setLoggingOut(true)
+    const keys = getStorageKeys()
     localStorage.removeItem('helix_logged_in')
-    localStorage.removeItem('helix_messages')
-    localStorage.removeItem('helix_chat_store')
-    localStorage.removeItem('helix_chat_list')
+    localStorage.removeItem(keys.messages)
+    localStorage.removeItem(keys.chatStore)
+    localStorage.removeItem(keys.chatList)
     localStorage.removeItem('helix_greeting')
     setTimeout(() => { window.location.href = '/signup' }, 1200)
   }, [])
@@ -734,11 +910,66 @@ export default function ChatApp() {
     setGreeting(randomGreeting())
   }, [])
 
+  const startGroupChat = useCallback(async () => {
+    const defaultName = 'New group chat'
+    
+    // Create room on the WebSocket server first
+    let roomId: string
+    try {
+      const { io } = await import('socket.io-client')
+      const socket = io('http://localhost:8000', { transports: ['websocket', 'polling'] })
+      
+      roomId = await new Promise<string>((resolve, reject) => {
+        socket.on('connect', () => {
+          socket.emit('create_room', (response: { roomId: string; inviteLink: string }) => {
+            socket.disconnect()
+            resolve(response.roomId)
+          })
+        })
+        socket.on('connect_error', () => {
+          socket.disconnect()
+          // Fallback to local ID if server unreachable
+          resolve(Date.now().toString(36) + Math.random().toString(36).substring(2, 8))
+        })
+        setTimeout(() => {
+          socket.disconnect()
+          resolve(Date.now().toString(36) + Math.random().toString(36).substring(2, 8))
+        }, 3000)
+      })
+    } catch {
+      roomId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8)
+    }
+
+    setIsGroupChat(true)
+    setGroupChatRoomId(roomId)
+    setGroupChatName(defaultName)
+    setChatActive(false)
+    setMessages([])
+    setCurrentChatId(null)
+    // Add to sidebar
+    const newGroupChat: ChatItem = {
+      id: roomId,
+      title: defaultName,
+      pinned: false,
+      timestamp: Date.now(),
+      isGroup: true,
+    }
+    setChatList(prev => [newGroupChat, ...prev])
+  }, [])
+  
+  const handleGroupChatNameChange = useCallback((newName: string) => {
+    setGroupChatName(newName)
+    // Update in chat list
+    if (groupChatRoomId) {
+      setChatList(prev => prev.map(c => c.id === groupChatRoomId ? { ...c, title: newName } : c))
+    }
+  }, [groupChatRoomId])
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#141414', overflow: 'hidden', position: 'relative' }}>
 
       {/* Voice light at top center — only on home screen, desktop only */}
-      {!chatActive && !isMobile && (
+      {!chatActive && !isMobile && !isGroupChat && (
         <div style={{
           position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', height: '70vh',
@@ -759,6 +990,7 @@ export default function ChatApp() {
           onSelectChat={(id) => handleSelectChat(id)}
           onLogout={handleLogout}
           onShareChat={() => setShareModalOpen(true)}
+          onStartGroupChat={startGroupChat}
         />
       )}
 
@@ -784,8 +1016,11 @@ export default function ChatApp() {
             onNewChat={startNewChat}
             onToggleGhost={() => isGhostMode ? exitGhostMode() : enterGhostMode()}
             isGhostMode={isGhostMode}
-            chatActive={chatActive}
+            chatActive={chatActive || isGroupChat}
             onShare={() => setShareModalOpen(true)}
+            isGroupChat={isGroupChat}
+            groupChatName={groupChatName}
+            onGroupChatNameChange={handleGroupChatNameChange}
           />
         )}
 
@@ -805,7 +1040,7 @@ export default function ChatApp() {
           {/* Learn Hacking — opens in new tab */}
 
           {/* Logged in — home screen (centered, input inline) */}
-          {loggedIn && !chatActive && !isGhostMode && (
+          {loggedIn && !chatActive && !isGhostMode && !isGroupChat && (
             <div style={{
               flex: 1,
               display: 'flex',
@@ -830,13 +1065,14 @@ export default function ChatApp() {
                   chatMode={chatMode}
                   onChatModeChange={setChatMode}
                   isGhostMode={isGhostMode}
+                  onStartGroupChat={startGroupChat}
                 />
               </div>
             </div>
           )}
 
           {/* Ghost mode idle */}
-          {loggedIn && isGhostMode && !chatActive && (
+          {loggedIn && isGhostMode && !chatActive && !isGroupChat && (
             <div style={{
               flex: 1,
               display: 'flex',
@@ -861,13 +1097,25 @@ export default function ChatApp() {
                   chatMode={chatMode}
                   onChatModeChange={setChatMode}
                   isGhostMode={isGhostMode}
+                  onStartGroupChat={startGroupChat}
                 />
               </div>
             </div>
           )}
 
+          {/* Group Chat Interface */}
+          {loggedIn && isGroupChat && groupChatRoomId && (
+            <GroupChatInterface
+              roomId={groupChatRoomId}
+              onBack={() => {
+                setIsGroupChat(false)
+                setGroupChatRoomId(null)
+              }}
+            />
+          )}
+
           {/* Chat active — messages scroll, input fixed at bottom */}
-          {loggedIn && chatActive && (
+          {loggedIn && chatActive && !isGroupChat && (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', height: '100%' }}>
               {/* Scrollable messages */}
               <div
@@ -958,6 +1206,7 @@ export default function ChatApp() {
                     onAgentExecute={() => agentPrompt && executeAgentAction(agentPrompt.actionType)}
                     onAgentExplain={() => { if (agentPrompt) { const m = agentPrompt.originalMessage; setAgentPrompt(null); sendExplain(m) } }}
                     onAgentDismiss={() => setAgentPrompt(null)}
+                    onStartGroupChat={startGroupChat}
                   />
                 </div>
               </div>

@@ -52,6 +52,19 @@ export default function SignupPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.detail || 'Invalid code'); setLoading(false); return }
+
+      // Check if account is blocked before allowing login
+      const blockCheck = await fetch('/api/auth/check-blocked', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailInput }),
+      })
+      const blockData = await blockCheck.json()
+      if (blockData.blocked) {
+        setError('BLOCKED')
+        setLoading(false)
+        return
+      }
+
       const isNew = !localStorage.getItem(`helix_seen_${emailInput}`)
       localStorage.setItem('helix_logged_in', 'true')
       localStorage.setItem('helix_user_name', data.name)
@@ -99,10 +112,31 @@ export default function SignupPage() {
     if (!google) { setError('Google login not ready. Please try again.'); return }
     google.accounts.id.initialize({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      callback: (response: any) => {
+      callback: async (response: any) => {
         if (!response.credential) { setError('Google login failed. Please try again.'); return }
         const payload = JSON.parse(atob(response.credential.split('.')[1]))
         const isNew = !localStorage.getItem(`helix_seen_${payload.email}`)
+
+        // Register in admin registry
+        if (payload.email) {
+          fetch('/api/admin/register-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: payload.email, name: payload.given_name || payload.name || 'User', picture: payload.picture || null }) }).catch(() => {})
+        }
+
+        // Check if blocked before allowing login
+        if (payload.email) {
+          try {
+            const blockCheck = await fetch('/api/auth/check-blocked', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: payload.email }),
+            })
+            const blockData = await blockCheck.json()
+            if (blockData.blocked) {
+              setError('BLOCKED')
+              return
+            }
+          } catch {}
+        }
+
         localStorage.setItem('helix_logged_in', 'true')
         localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
         localStorage.setItem('helix_user_email', payload.email || '')
@@ -153,6 +187,30 @@ export default function SignupPage() {
         .nav-link-item:hover { color: #fff !important; background: rgba(255,255,255,0.03) !important; }
         .menu-btn:hover { color: #fff !important; }
       `}</style>
+
+      {/* Blocked Screen */}
+      {error === 'BLOCKED' && (
+        <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <div style={{ textAlign: 'center', maxWidth: 440, padding: '0 24px' }}>
+            <div style={{ width: 64, height: 64, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 28 }}>🚫</div>
+            <h1 style={{ color: '#f3f4f6', fontSize: 22, fontWeight: 700, margin: '0 0 12px' }}>Account Suspended</h1>
+            <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.7, margin: '0 0 8px' }}>
+              Your account has been suspended by <strong style={{ color: '#e5e7eb' }}>HELIX Core</strong>.
+            </p>
+            <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.7, margin: '0 0 32px' }}>
+              You are no longer able to access HELIX services. If you believe this is a mistake, please contact our customer service team for assistance.
+            </p>
+            <div style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: 12, padding: '20px 24px', marginBottom: 24, textAlign: 'left' }}>
+              <p style={{ color: '#6b7280', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Customer Support</p>
+              <p style={{ color: '#e5e7eb', fontSize: 14, margin: '0 0 4px' }}>📧 {process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@helixcore.ai'}</p>
+              <p style={{ color: '#9ca3af', fontSize: 12, margin: 0 }}>Please include your email address in your message.</p>
+            </div>
+            <button onClick={() => setError('')} style={{ padding: '10px 24px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#6b7280', fontSize: 13, cursor: 'pointer' }}>
+              ← Back to sign in
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Splash */}
       {!splashDone && (
@@ -257,7 +315,7 @@ export default function SignupPage() {
                   placeholder="you@example.com" autoFocus
                   style={{ width: '100%', padding: '15px 20px', borderRadius: 14, border: '1px solid #2e2e2e', background: '#1c1c1c', color: '#fff', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
-                {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{error}</p>}
+                {error && error !== 'BLOCKED' && <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{error}</p>}
                 <button onClick={handleSendOTP} disabled={loading} style={{ width: '100%', padding: '15px', borderRadius: 14, border: 'none', background: '#e8e8e8', color: '#111', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 16, opacity: loading ? 0.6 : 1, fontFamily: 'inherit' }}>
                   {loading ? 'Sending...' : 'Send code →'}
                 </button>
@@ -283,7 +341,7 @@ export default function SignupPage() {
                     />
                   ))}
                 </div>
-                {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10 }}>{error}</p>}
+                {error && error !== 'BLOCKED' && <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10 }}>{error}</p>}
                 <button onClick={handleVerifyOTP} disabled={loading} style={{ width: '100%', padding: '15px', borderRadius: 14, border: 'none', background: '#e8e8e8', color: '#111', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 16, opacity: loading ? 0.6 : 1, fontFamily: 'inherit' }}>
                   {loading ? 'Verifying...' : 'Verify & Sign in'}
                 </button>
@@ -338,7 +396,7 @@ export default function SignupPage() {
                   Continue with X
                 </button>
 
-                {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>}
+                {error && error !== 'BLOCKED' && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>}
 
                 <p style={{ fontSize: 14, color: '#555', textAlign: 'center', marginTop: 24 }}>
                   {isSignUp ? 'Already have an account? ' : "Don't have an account? "}

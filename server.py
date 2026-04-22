@@ -18,14 +18,16 @@ Endpoints:
 import os
 import re
 import time
+import json
 import base64
 import subprocess
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 import requests
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -42,6 +44,78 @@ from config.model import generate, generate_vision
 PORT = int(os.getenv("PORT", 8000))
 HELIX_WORKSPACE = Path(os.getenv("HELIX_WORKSPACE", "./helix_workspace"))
 HELIX_WORKSPACE.mkdir(parents=True, exist_ok=True)
+
+# ─────────────────────────────────────────────────────────────────────
+# USER REGISTRY
+# ─────────────────────────────────────────────────────────────────────
+USERS_FILE = Path(__file__).parent / "users.json"
+
+# Module-level in-memory registry
+_users_registry: list = []
+
+
+def load_users() -> list:
+    """Load users from users.json into memory."""
+    global _users_registry
+    try:
+        if USERS_FILE.exists():
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                _users_registry = json.load(f)
+        else:
+            _users_registry = []
+            save_users()
+    except Exception as e:
+        print(f"[ERROR] Failed to load users.json: {e}")
+        _users_registry = []
+    return _users_registry
+
+
+def save_users() -> None:
+    """Persist the in-memory registry to users.json."""
+    try:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(_users_registry, f, indent=2)
+    except Exception as e:
+        print(f"[ERROR] Failed to save users.json: {e}")
+        raise
+
+
+def register_or_update_user(email: str, name: str, picture: Optional[str] = None) -> dict:
+    """
+    Create a new UserRecord on first login, or update lastActiveAt / loginCount
+    on subsequent logins. Persists to disk after every mutation.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    existing = next((u for u in _users_registry if u["email"] == email), None)
+
+    if existing is None:
+        new_user = {
+            "email": email,
+            "name": name,
+            "plan": "free",
+            "signedUpAt": now,
+            "lastActiveAt": now,
+            "messageCount": 0,
+            "loginCount": 1,
+            "blocked": False,
+            "picture": picture,
+        }
+        _users_registry.append(new_user)
+        save_users()
+        return new_user
+    else:
+        existing["lastActiveAt"] = now
+        existing["loginCount"] = existing.get("loginCount", 0) + 1
+        if picture is not None:
+            existing["picture"] = picture
+        save_users()
+        return existing
+
+
+# Load registry on startup
+load_users()
+
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "")
 
 # ─────────────────────────────────────────────────────────────────────
 # APP SETUP
@@ -63,6 +137,12 @@ class ChatRequest(BaseModel):
     history: list = []
     deepThink: bool = False
     images: list = []
+    groupChat: bool = False
+    groupContext: Optional[str] = None
+    participantCount: int = 0
+    isOnlyCreator: bool = False
+    participantNames: list = []
+    email: Optional[str] = None
 
 class SearchRequest(BaseModel):
     message: str
@@ -172,17 +252,30 @@ def fetch_page(url: str) -> str:
 
 @app.post("/api/chat")
 async def api_chat(req: ChatRequest):
+    # Block check — must happen before any processing
+    if req.email:
+        user = next((u for u in _users_registry if u["email"] == req.email), None)
+        if user and user.get("blocked"):
+            raise HTTPException(status_code=403, detail="Your account has been suspended.")
+
     message = req.message
     history = req.history
     deep_think = req.deepThink
     images = req.images
+
+    # Same system prompt for both — just append participant info for group chat
+    if req.groupChat and req.participantNames:
+        names_str = ", ".join(req.participantNames)
+        system_prompt = SYSTEM_PROMPT + f"\n\n---\n\nYou are in a group chat with {len(req.participantNames)} people: {names_str}. Address them by name when relevant."
+    else:
+        system_prompt = SYSTEM_PROMPT
 
     # Vision request
     if images:
         try:
             raw = re.sub(r"^data:image/\w+;base64,", "", images[0])
             image_bytes = list(base64.b64decode(raw))
-            reply = generate_vision(SYSTEM_PROMPT, message, image_bytes)
+            reply = generate_vision(system_prompt, message, image_bytes)
             return {"reply": reply, "webSearched": False, "sources": [], "locationQuery": None}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Vision error: {e}")
@@ -219,7 +312,7 @@ async def api_chat(req: ChatRequest):
             )
             chat_history.append({"role": "user", "content": user_msg})
 
-        reply = generate(SYSTEM_PROMPT, chat_history, 4096)
+        reply = generate(system_prompt, chat_history, 4096)
         return {"reply": reply, "webSearched": bool(sources), "sources": sources, "locationQuery": location_query}
 
     except Exception as e:
@@ -409,7 +502,6 @@ import random
 import string
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime, timedelta
 
 # ─────────────────────────────────────────────────────────────────────
 # EMAIL AUTH
@@ -499,6 +591,7 @@ async def verify_otp(req: VerifyOTPRequest):
     del otp_store[req.email]
     # Extract name from email
     name = req.email.split("@")[0].replace(".", " ").replace("_", " ").title()
+    register_or_update_user(req.email, name)
     return {"success": True, "name": name, "email": req.email}
 
 @app.post("/api/auth/welcome")
@@ -572,6 +665,100 @@ div[style*="margin: 16px 0"]{{margin:0!important;}}
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send login alert: {e}")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# ADMIN ENDPOINTS
+# ─────────────────────────────────────────────────────────────────────
+
+VALID_PLANS = {"free", "pro", "proplus", "ultra"}
+
+
+def _require_admin(request: Request):
+    """Raise HTTP 401 if X-Admin-Secret header is missing or wrong."""
+    secret = request.headers.get("x-admin-secret", "")
+    if not ADMIN_SECRET or secret != ADMIN_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+class AdminBlockRequest(BaseModel):
+    email: str
+
+class AdminUnblockRequest(BaseModel):
+    email: str
+
+class AdminUpdatePlanRequest(BaseModel):
+    email: str
+    plan: str
+
+class AdminSendEmailRequest(BaseModel):
+    to: str
+    subject: str
+    body: str
+
+
+@app.get("/api/admin/users")
+async def admin_get_users(request: Request):
+    _require_admin(request)
+    return {"users": _users_registry}
+
+
+@app.post("/api/admin/block")
+async def admin_block(req: AdminBlockRequest, request: Request):
+    _require_admin(request)
+    user = next((u for u in _users_registry if u["email"] == req.email), None)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user["blocked"] = True
+    try:
+        save_users()
+    except Exception as e:
+        print(f"[ERROR] admin_block save failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save user data")
+    return {"success": True, "user": user}
+
+
+@app.post("/api/admin/unblock")
+async def admin_unblock(req: AdminUnblockRequest, request: Request):
+    _require_admin(request)
+    user = next((u for u in _users_registry if u["email"] == req.email), None)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user["blocked"] = False
+    try:
+        save_users()
+    except Exception as e:
+        print(f"[ERROR] admin_unblock save failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save user data")
+    return {"success": True, "user": user}
+
+
+@app.post("/api/admin/update-plan")
+async def admin_update_plan(req: AdminUpdatePlanRequest, request: Request):
+    _require_admin(request)
+    if req.plan not in VALID_PLANS:
+        raise HTTPException(status_code=400, detail=f"Invalid plan. Must be one of: {', '.join(sorted(VALID_PLANS))}")
+    user = next((u for u in _users_registry if u["email"] == req.email), None)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user["plan"] = req.plan
+    try:
+        save_users()
+    except Exception as e:
+        print(f"[ERROR] admin_update_plan save failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save user data")
+    return {"success": True, "user": user}
+
+
+@app.post("/api/admin/send-email")
+async def admin_send_email(req: AdminSendEmailRequest, request: Request):
+    _require_admin(request)
+    try:
+        send_email(req.to, req.subject, req.body)
+        return {"success": True}
+    except Exception as e:
+        print(f"[ERROR] admin_send_email failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send email")
 
 
 # ─────────────────────────────────────────────────────────────────────

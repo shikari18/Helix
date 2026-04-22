@@ -24,9 +24,16 @@ USE_OWN_MODEL = False
 
 # ─────────────────────────────────────────────────────────────────────
 # GEMINI CONFIG (primary — free with generous limits)
+# Uses Gemma models which are more permissive than Gemini Flash
 # ─────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+GEMMA_MODELS = [
+    "gemma-3-27b-it",
+    "gemma-3-12b-it",
+    "gemma-3-4b-it",
+    "gemma-3-2b-it",
+]
 
 # ─────────────────────────────────────────────────────────────────────
 # OPENROUTER CONFIG (secondary)
@@ -105,27 +112,26 @@ def run_own_model(system_prompt: str, messages: list, max_tokens: int = 2048) ->
 def generate(system_prompt: str, messages: list, max_tokens: int = 2048) -> str:
     """
     Main inference entry point.
-    Tries Gemini first (valid key), then OpenRouter, then Cloudflare.
+    Uses Gemma models only — no Cloudflare fallback (Cloudflare has hardcoded safety filters).
     """
     if USE_OWN_MODEL:
         return run_own_model(system_prompt, messages, max_tokens)
     
-    # Try Gemini first (key confirmed working)
+    # Try Gemma (primary)
     if GEMINI_API_KEY:
         try:
             return _call_gemini(system_prompt, messages, max_tokens)
         except Exception as e:
-            print(f"[Gemini] Failed: {e}, trying OpenRouter")
+            print(f"[Gemma] Failed: {e}, trying OpenRouter")
     
-    # Try OpenRouter
+    # Try OpenRouter (secondary)
     if OPENROUTER_API_KEY:
         try:
             return _call_openrouter(system_prompt, messages, max_tokens)
         except Exception as e:
-            print(f"[OpenRouter] Failed: {e}, falling back to Cloudflare")
+            print(f"[OpenRouter] Failed: {e}")
     
-    # Fall back to Cloudflare
-    return _call_cloudflare(system_prompt, messages, max_tokens)
+    raise Exception("All models failed — no Cloudflare fallback (safety filters)")
 
 
 def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_tokens: int = 1024) -> str:
@@ -144,50 +150,43 @@ def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_t
 # ─────────────────────────────────────────────────────────────────────
 def _call_gemini(system_prompt: str, messages: list, max_tokens: int) -> str:
     trimmed = messages[-40:] if len(messages) > 40 else messages
-    
+
+    # Build contents — Gemma doesn't support system_instruction, inject as first turn
     contents = []
+    contents.append({"role": "user", "parts": [{"text": f"[SYSTEM INSTRUCTIONS]\n{system_prompt}"}]})
+    contents.append({"role": "model", "parts": [{"text": "ok"}]})
+
     for m in trimmed:
         role = "model" if m.get("role") == "assistant" else "user"
         contents.append({"role": role, "parts": [{"text": m.get("content", "")}]})
-    
-    # Try multiple Gemini models in order
-    gemini_models = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-flash-latest",
-    ]
-    
+
     import time
-    for model in gemini_models:
-        # Use the correct v1beta endpoint format
+    for model in GEMMA_MODELS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
         try:
             resp = requests.post(
                 url,
                 json={
-                    "system_instruction": {"parts": [{"text": system_prompt}]},
                     "contents": contents,
-                    "generationConfig": {
-                        "maxOutputTokens": max_tokens,
-                        "temperature": 0.9,
-                    }
+                    "generationConfig": {"maxOutputTokens": max_tokens}
                 },
                 headers={"Content-Type": "application/json"},
                 timeout=60
             )
             if resp.status_code == 429:
-                print(f"[Gemini] Rate limited on {model}, waiting 5s...")
-                time.sleep(5)
+                print(f"[Gemma] Rate limited on {model}, trying next...")
+                time.sleep(1)
                 continue
             resp.raise_for_status()
-            return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            reply = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            if reply:
+                print(f"[Gemma] Responded with model: {model}")
+                return reply
         except Exception as e:
-            if "429" in str(e):
-                time.sleep(2)
-                continue
-            raise
-    
-    raise Exception("All Gemini models rate limited")
+            print(f"[Gemma] {model} failed: {e}")
+            continue
+
+    raise Exception("All Gemma models failed")
 
 
 # ─────────────────────────────────────────────────────────────────────

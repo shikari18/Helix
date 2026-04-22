@@ -12,5 +12,20 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify(body),
   })
   const data = await res.json()
+
+  // Register user in the registry on successful OTP verification
+  if (res.ok && data.email) {
+    try {
+      await fetch(`${API_URL}/api/admin/register-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Secret': process.env.ADMIN_SECRET || '',
+        },
+        body: JSON.stringify({ email: data.email, name: data.name || data.email.split('@')[0] }),
+      })
+    } catch {}
+  }
+
   return NextResponse.json(data, { status: res.status })
 }

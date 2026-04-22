@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const PRICES = {
-  monthly: { pro: 25, proPlus: 60, ultra: 200 },
-  yearly:  { pro: 21, proPlus: 50, ultra: 166 },
+  monthly: { pro: 9, proPlus: 40, ultra: 200 },
+  yearly:  { pro: 15, proPlus: 33, ultra: 166 },
 }
 
 const CheckIcon = () => (
@@ -25,7 +25,6 @@ export default function PricingPage() {
           from { opacity: 0; transform: translateY(-120px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
         body { overflow: auto !important; display: block !important; padding: 0 !important; }
         .plan-btn-outline:hover { border-color: #888 !important; }
         .plan-btn-primary:hover { background: #4a4aee !important; }
@@ -35,11 +34,7 @@ export default function PricingPage() {
         .card-anim:nth-child(1) { animation: slideDown 0.5s 0s ease forwards; }
         .card-anim:nth-child(2) { animation: slideDown 0.5s 0.15s ease forwards; }
         .card-anim:nth-child(3) { animation: slideDown 0.5s 0.3s ease forwards; }
-        .card-anim:nth-child(4) { animation: slideDown 0.5s 0.45s ease forwards; }
         @media (max-width: 900px) {
-          .cards-wrapper { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 560px) {
           .cards-wrapper { grid-template-columns: 1fr !important; }
         }
       `}</style>
@@ -62,24 +57,7 @@ export default function PricingPage() {
         </div>
 
         {/* Cards */}
-        <div className="cards-wrapper" style={{ width: '100%', flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-
-          {/* FREE */}
-          <div className="card-anim" style={{ opacity: 0, padding: '36px 30px', display: 'flex', flexDirection: 'column', position: 'relative', border: '1px solid #2a2a2a', borderRadius: 24, background: '#111' }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: '#fff', marginBottom: 20 }}>Free</div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 1, marginBottom: 8 }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 8 }}>$</span>
-              <span style={{ fontSize: 72, fontWeight: 800, color: '#fff', lineHeight: 1 }}>0</span>
-              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>month</span></span>
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>Try Helix</div>
-            <div style={{ textAlign: 'center', fontSize: 14, color: '#444', marginBottom: 26, padding: 13, border: '1px solid #222', borderRadius: 12 }}>Your current plan</div>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, paddingTop: 20 }}>
-              {['Limited responses', 'Basic pentesting assistance', 'Agent mode with local sandbox'].map(f => (
-                <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 20, fontWeight: 500, color: '#bbb', lineHeight: 1.4 }}><CheckIcon />{f}</li>
-              ))}
-            </ul>
-          </div>
+        <div className="cards-wrapper" style={{ width: '100%', flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, maxWidth: 1200 }}>
 
           {/* PRO */}
           <div className="card-anim" style={{ opacity: 0, padding: '36px 30px', display: 'flex', flexDirection: 'column', position: 'relative', border: '1px solid #2a2a2a', borderRadius: 24, background: '#111' }}>
@@ -87,13 +65,12 @@ export default function PricingPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 1, marginBottom: 8 }}>
               <span style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 8 }}>$</span>
               <span style={{ fontSize: 72, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{p.pro}</span>
-              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>month</span></span>
+              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>{billing === 'monthly' ? 'month' : 'year'}</span></span>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>For everyday pentesting</div>
-            <button className="plan-btn-outline" style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Pro</button>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Everything in Free, plus:</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>Essential tools for daily operations</div>
+            <button className="plan-btn-outline" onClick={() => { localStorage.setItem('helix_plan', 'pro'); window.location.href = '/' }} style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Pro</button>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, paddingTop: 20 }}>
-              {['Extended usage limits', 'File uploads', 'Cloud agents', 'Advanced recon tools', 'Maximum context window'].map(f => (
+              {['Extended daily usage limits', 'Practice mode access', 'Group collaboration', '2 image uploads per week'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 20, fontWeight: 500, color: '#bbb', lineHeight: 1.4 }}><CheckIcon />{f}</li>
               ))}
             </ul>
@@ -106,13 +83,13 @@ export default function PricingPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 1, marginBottom: 8 }}>
               <span style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 8 }}>$</span>
               <span style={{ fontSize: 72, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{p.proPlus}</span>
-              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>month</span></span>
+              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>{billing === 'monthly' ? 'month' : 'year'}</span></span>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>For power users who need more</div>
-            <button className="plan-btn-outline" style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Pro+</button>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>Advanced capabilities for professionals</div>
+            <button className="plan-btn-outline" onClick={() => { localStorage.setItem('helix_plan', 'proplus'); window.location.href = '/' }} style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Pro+</button>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Everything in Pro, plus:</div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, paddingTop: 20 }}>
-              {['3x more usage than Pro', 'Priority response speed', 'Early access to new features'].map(f => (
+              {['Agent mode with daily refresh', '10 image uploads per week', 'Priority task execution'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 20, fontWeight: 500, color: '#bbb', lineHeight: 1.4 }}><CheckIcon />{f}</li>
               ))}
             </ul>
@@ -124,18 +101,27 @@ export default function PricingPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 1, marginBottom: 8 }}>
               <span style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginTop: 8 }}>$</span>
               <span style={{ fontSize: 72, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{p.ultra}</span>
-              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>month</span></span>
+              <span style={{ display: 'flex', flexDirection: 'column', fontSize: 12, color: '#666', lineHeight: 1.4, alignSelf: 'flex-end', marginBottom: 6, marginLeft: 5 }}><span>USD /</span><span>{billing === 'monthly' ? 'month' : 'year'}</span></span>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>Get the most out of Helix</div>
-            <button className="plan-btn-outline" style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Ultra</button>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Everything in Pro, plus:</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#888', marginBottom: 22 }}>Unlimited power for elite operators</div>
+            <button className="plan-btn-outline" onClick={() => { localStorage.setItem('helix_plan', 'ultra'); window.location.href = '/' }} style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 26, background: 'transparent', border: '1px solid #3a3a3a', color: '#fff' }}>Get Ultra</button>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Everything in Pro+, plus:</div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, paddingTop: 20 }}>
-              {['10x more usage than Pro', 'Priority access to new features', 'Dedicated support'].map(f => (
+              {['Unlimited usage across all features', 'Exclusive early access to updates', 'Premium support channel'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 20, fontWeight: 500, color: '#bbb', lineHeight: 1.4 }}><CheckIcon />{f}</li>
               ))}
             </ul>
           </div>
 
+        </div>
+
+        {/* Mobile Notice */}
+        <div style={{ marginTop: 32, padding: '20px 24px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16, maxWidth: 800, textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: '#aaa', lineHeight: 1.6 }}>
+            <strong style={{ color: '#fff' }}>Important:</strong> Practice mode and Agent mode are desktop-only features. 
+            If you subscribe on mobile, these features will be available when you access your account from a desktop device. 
+            Chat and Group chat work seamlessly across all devices.
+          </div>
         </div>
       </div>
     </>

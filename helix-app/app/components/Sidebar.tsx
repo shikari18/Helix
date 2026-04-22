@@ -14,28 +14,129 @@ interface Props {
   onLogout: () => void
   onShareChat: () => void
   onLearnHacking?: () => void
+  onStartGroupChat?: () => void
 }
 
-export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking }: Props) {
+export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onStartGroupChat }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const userName = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_name') || 'User') : 'User'
   const userEmail = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_email') || '') : ''
   const userPicture = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_picture') || '') : ''
   const userInitial = userName.charAt(0).toUpperCase()
+  
+  const getPlanName = () => {
+    if (typeof window === 'undefined') return 'Free plan'
+    const plan = localStorage.getItem('helix_plan') || 'free'
+    if (plan === 'ultra') return 'Ultra'
+    if (plan === 'proplus') return 'Pro+'
+    if (plan === 'pro') return 'Pro'
+    return 'Free plan'
+  }
 
   const filtered = chatList.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+  
+  // Separate group chats from regular chats
+  const groupChats = filtered.filter(c => c.isGroup === true)
+  const regularChats = filtered.filter(c => !c.isGroup)
+
+  const renameChat = (id: string, newTitle: string) => {
+    setChatList(prev => prev.map(c => c.id === id ? { ...c, title: newTitle } : c))
+  }
 
   const deleteChat = (id: string) => {
     setChatList(prev => prev.filter(c => c.id !== id))
+    setOpenMenuId(null)
   }
 
   const pinChat = (id: string) => {
     setChatList(prev => prev.map(c => c.id === id ? { ...c, pinned: !c.pinned } : c))
+    setOpenMenuId(null)
   }
+
+  const ChatItem = ({ chat }: { chat: any }) => (
+    <div
+      style={{ position: 'relative' }}
+      onMouseLeave={() => setOpenMenuId(null)}
+    >
+      {renamingId === chat.id ? (
+        <input
+          autoFocus
+          value={renameValue}
+          onChange={e => setRenameValue(e.target.value)}
+          onBlur={() => { renameChat(chat.id, renameValue || chat.title); setRenamingId(null) }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { renameChat(chat.id, renameValue || chat.title); setRenamingId(null) }
+            if (e.key === 'Escape') setRenamingId(null)
+          }}
+          style={{
+            width: '100%', padding: '10px 14px', borderRadius: 10,
+            border: '1px solid #3d3d3d', background: '#2d2d2d',
+            color: '#fff', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+      ) : (
+        <div
+          onClick={() => onSelectChat(chat.id)}
+          style={{
+            padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+            fontSize: 14, color: chat.id === currentChatId ? '#fff' : '#b0b0b0',
+            background: chat.id === currentChatId ? '#2d2d2d' : 'transparent',
+            marginBottom: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            transition: 'all 0.2s',
+          }}
+          onMouseOver={e => { if (chat.id !== currentChatId) (e.currentTarget as HTMLElement).style.background = '#2d2d2d' }}
+          onMouseOut={e => { if (chat.id !== currentChatId) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontSize: 14, fontWeight: chat.id === currentChatId ? 600 : 400 }}>
+            {chat.pinned && '📌 '}{chat.title}
+          </span>
+          <button
+            onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === chat.id ? null : chat.id) }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* 3-dot dropdown */}
+      {openMenuId === chat.id && (
+        <div style={{
+          position: 'absolute', right: 0, top: '100%', zIndex: 500,
+          background: '#1e1e1e', border: '1px solid #3d3d3d', borderRadius: 12,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.6)', minWidth: 160, overflow: 'hidden',
+        }}>
+          {[
+            { label: 'Rename', icon: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, action: () => { setRenameValue(chat.title); setRenamingId(chat.id); setOpenMenuId(null) } },
+            { label: chat.pinned ? 'Unpin' : 'Pin', icon: chat.pinned ? <><line x1="2" y1="2" x2="22" y2="22"/><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7"/><rect x="9" y="3" width="6" height="4" rx="1"/></> : <><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7"/><rect x="9" y="3" width="6" height="4" rx="1"/></>, action: () => { pinChat(chat.id); setOpenMenuId(null) } },
+            { label: 'Share', icon: <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>, action: () => { onShareChat(); setOpenMenuId(null) } },
+            { label: 'Delete', icon: <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></>, action: () => { deleteChat(chat.id); setOpenMenuId(null) }, red: true },
+          ].map(item => (
+            <div
+              key={item.label}
+              onClick={item.action}
+              style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: (item as any).red ? '#ff4444' : '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.15s' }}
+              onMouseOver={e => (e.currentTarget.style.background = '#2d2d2d')}
+              onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
   const handleClearAll = () => {
     setChatList([])
@@ -117,6 +218,10 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
 
         {/* Group Chat */}
         <button
+          onClick={() => {
+            onStartGroupChat?.()
+            onClose()
+          }}
           style={{
             margin: '0 16px 8px', padding: '10px 14px', borderRadius: 10,
             border: 'none', background: 'transparent', cursor: 'pointer',
@@ -151,6 +256,18 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           Practice
         </button>
 
+        {/* Group Chats Section */}
+        {groupChats.length > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 28px 8px', marginTop: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GROUP CHATS</span>
+            </div>
+            <div style={{ padding: '0 16px' }}>
+              {groupChats.map(chat => <ChatItem key={chat.id} chat={chat} />)}
+            </div>
+          </>
+        )}
+
         {/* Recent Chats Header */}
         <div style={{ 
           display: 'flex', 
@@ -180,7 +297,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
 
         {/* Chat list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
-          {filtered.length === 0 ? (
+          {regularChats.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#505050' }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#505050" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -192,43 +309,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
               <span style={{ fontSize: 13 }}>No chats yet</span>
             </div>
           ) : (
-            filtered.map(chat => (
-              <div
-                key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
-                style={{
-                  padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                  fontSize: 14, color: chat.id === currentChatId ? '#fff' : '#b0b0b0',
-                  background: chat.id === currentChatId ? '#2d2d2d' : 'transparent',
-                  marginBottom: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => { if (chat.id !== currentChatId) (e.currentTarget as HTMLElement).style.background = '#2d2d2d' }}
-                onMouseOut={e => { if (chat.id !== currentChatId) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontSize: 14, fontWeight: chat.id === currentChatId ? 600 : 400 }}>
-                  {chat.pinned && '📌 '}{chat.title}
-                </span>
-                <button
-                  onClick={e => e.stopPropagation()}
-                  style={{ 
-                    background: 'none', 
-                    border: 'none', 
-                    cursor: 'pointer', 
-                    color: '#666', 
-                    padding: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  title="Options"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
-                  </svg>
-                </button>
-              </div>
-            ))
+            regularChats.map(chat => <ChatItem key={chat.id} chat={chat} />)
           )}
         </div>
 
@@ -295,7 +376,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>{userName}</div>
-              <div style={{ fontSize: 12, color: '#808080' }}>{userEmail || 'Free plan'}</div>
+              <div style={{ fontSize: 12, color: '#808080' }}>{userEmail || getPlanName()}</div>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>

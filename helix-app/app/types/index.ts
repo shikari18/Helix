@@ -11,6 +11,7 @@ export interface ChatItem {
   title: string
   pinned: boolean
   timestamp: number
+  isGroup?: boolean
 }
 
 export type AppMode = 'landing' | 'chat'

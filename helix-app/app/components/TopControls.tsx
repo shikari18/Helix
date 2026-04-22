@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface Props {
   sidebarOpen: boolean
   onToggleSidebar: () => void
@@ -8,9 +10,22 @@ interface Props {
   isGhostMode: boolean
   chatActive: boolean
   onShare?: () => void
+  isGroupChat?: boolean
+  groupChatName?: string
+  onGroupChatNameChange?: (name: string) => void
 }
 
-export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, onToggleGhost, isGhostMode, chatActive, onShare }: Props) {
+export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, onToggleGhost, isGhostMode, chatActive, onShare, isGroupChat = false, groupChatName = 'New group chat', onGroupChatNameChange }: Props) {
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(groupChatName)
+  
+  const handleNameSave = () => {
+    if (editedName.trim() && onGroupChatNameChange) {
+      onGroupChatNameChange(editedName.trim())
+    }
+    setIsEditingName(false)
+  }
+  
   return (
     <>
       {/* Left controls */}
@@ -37,8 +52,7 @@ export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, o
         </button>
 
         {/* New Chat — left side desktop, left side mobile only before chat */}
-        {!sidebarOpen && !isGhostMode && (
-          <button
+        {!sidebarOpen && !isGhostMode && !isGroupChat && (          <button
             onClick={onNewChat}
             id="topNewChatBtn"
             className={`new-chat-top-btn${chatActive ? ' mobile-hide' : ''}`}
@@ -59,6 +73,8 @@ export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, o
             New Chat
           </button>
         )}
+        
+        {/* Group Chat Name — removed from top bar, shown in sidebar instead */}
       </div>
 
       {/* RIGHT side */}
@@ -88,7 +104,7 @@ export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, o
       )}
 
       {/* Chat active — share + new chat on right */}
-      {!isGhostMode && chatActive && (
+      {!isGhostMode && chatActive && !isGroupChat && (
         <div style={{
           position: 'fixed', top: 20, right: 20,
           display: 'flex', alignItems: 'center', gap: 10,

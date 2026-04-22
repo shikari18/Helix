@@ -1408,6 +1408,39 @@ textarea::placeholder {
   transition: background 0.2s;
 }
 
+@media (max-width: 768px) {
+  .upgrade-attach-popup {
+    width: calc(100vw - 48px);
+    position: fixed;
+    left: 24px !important;
+    right: 24px !important;
+    bottom: 80px;
+    padding: 16px 16px 14px 16px;
+    border-radius: 14px;
+  }
+
+  .upgrade-agent-popup {
+    left: 24px !important;
+    right: 24px !important;
+  }
+
+  .upgrade-attach-popup h3 {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .upgrade-attach-popup p {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+  .upgrade-attach-btn {
+    padding: 12px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+}
+
 .upgrade-attach-btn:hover {
   background: #e0e0e0;
 }

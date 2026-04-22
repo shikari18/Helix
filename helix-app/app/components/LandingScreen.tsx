@@ -33,6 +33,17 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
   const [logoKey, setLogoKey] = useState(0)
   const [morphing, setMorphing] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [planName, setPlanName] = useState('Free plan')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const plan = localStorage.getItem('helix_plan') || 'free'
+      if (plan === 'ultra') setPlanName('Ultra')
+      else if (plan === 'proplus') setPlanName('Pro+')
+      else if (plan === 'pro') setPlanName('Pro')
+      else setPlanName('Free plan')
+    }
+  }, [])
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -146,9 +157,13 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
           color: '#888',
           marginBottom: 30,
         }}>
-          Free plan
-          <span style={{ color: '#555' }}>·</span>
-          <a href="/pricing" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</a>
+          {planName}
+          {planName !== 'Ultra' && (
+            <>
+              <span style={{ color: '#555' }}>·</span>
+              <a href="/pricing" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</a>
+            </>
+          )}
         </div>
       )}
 

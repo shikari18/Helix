@@ -36,7 +36,6 @@ export default function ChatInterface({
       'Where do we start, Shikari?',
       'Got an idea, Shikari?',
       'Ready to run recon, Shikari?',
-      'What are we fuzzing today, Shikari?',
       'Which exploit are we testing, Shikari?',
       'Ready to pop a shell, Shikari?'
     ];

@@ -20,9 +20,10 @@ interface Props {
   onAgentExecute?: () => void
   onAgentExplain?: () => void
   onAgentDismiss?: () => void
+  onStartGroupChat?: () => void
 }
 
-export default function InputSection({ value, onChange, onSend, chatMode, onChatModeChange, isGhostMode, chatActive = false, isTyping = false, onStop, disabled = false, rateLimited = false, agentPrompt = null, agentRunning = false, onAgentExecute, onAgentExplain, onAgentDismiss }: Props) {
+export default function InputSection({ value, onChange, onSend, chatMode, onChatModeChange, isGhostMode, chatActive = false, isTyping = false, onStop, disabled = false, rateLimited = false, agentPrompt = null, agentRunning = false, onAgentExecute, onAgentExplain, onAgentDismiss, onStartGroupChat }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
@@ -85,6 +86,12 @@ export default function InputSection({ value, onChange, onSend, chatMode, onChat
   }
 
   const handleModeChange = (mode: ChatMode) => {
+    // Agent mode is coming soon — block for all users
+    if (mode === 'agent') {
+      setModeDropdownOpen(false)
+      setShowAgentUpgradePopup(true)
+      return
+    }
     onChatModeChange(mode)
     setModeDropdownOpen(false)
   }
@@ -440,13 +447,8 @@ export default function InputSection({ value, onChange, onSend, chatMode, onChat
               <div className="mode-pill-wrap">
                 <button
                   onClick={() => {
-                    if (chatMode !== 'agent') {
-                      setShowAgentUpgradePopup(o => !o)
-                      setModeDropdownOpen(false)
-                    } else {
-                      setModeDropdownOpen(o => !o)
-                      setShowAgentUpgradePopup(false)
-                    }
+                    setModeDropdownOpen(o => !o)
+                    setShowAgentUpgradePopup(false)
                   }}
                   className={`mode-pill ${chatMode === 'agent' ? 'agent-active' : ''}`}
                 >
@@ -544,12 +546,12 @@ export default function InputSection({ value, onChange, onSend, chatMode, onChat
         </div>
       )}
 
-      {/* Agent Mode Upgrade Popup */}
+      {/* Agent Mode Coming Soon Popup */}
       {showAgentUpgradePopup && (
-        <div className="upgrade-attach-popup active" style={{ left: 60 }}>
-          <h3>Upgrade to Agent Mode</h3>
-          <p>Agent Mode lets HELIX autonomously run scans, recon, and multi-step hacking workflows in real time.</p>
-          <a href="/pricing" className="upgrade-attach-btn">Upgrade now</a>
+        <div className="upgrade-attach-popup active upgrade-agent-popup" style={{ left: 60 }}>
+          <h3>🚧 Coming Soon</h3>
+          <p>Agent Mode is currently under development and will be available soon. Stay tuned!</p>
+          <button onClick={() => setShowAgentUpgradePopup(false)} className="upgrade-attach-btn" style={{ background: '#2a2a2a', border: '1px solid #3a3a3a' }}>Got it</button>
         </div>
       )}
 

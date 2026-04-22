@@ -8,7 +8,11 @@ const path = require('path');
 const googleTTS = require('google-tts-api');
 
 const app = express();
+const http = require('http');
+const { initializeWebSocketServer } = require('./websocket-server');
+
 const PORT = process.env.PORT || 3000;
+const httpServer = http.createServer(app);
 const HELIX_WORKSPACE = process.env.HELIX_WORKSPACE || path.join(__dirname, 'helix_workspace');
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
@@ -16,14 +20,91 @@ const CF_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const CF_VISION_MODEL = '@cf/meta/llama-3.2-11b-vision-instruct';
 const CF_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${CF_MODEL}`;
 const CF_VISION_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${CF_VISION_MODEL}`;
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+const VALID_PLANS = new Set(['free', 'pro', 'proplus', 'ultra']);
 
 if (!fs.existsSync(HELIX_WORKSPACE)) {
     fs.mkdirSync(HELIX_WORKSPACE, { recursive: true });
 }
 
+// ── User Registry ──────────────────────────────────────────────────
+const USERS_FILE = path.join(__dirname, 'users.json');
+let _usersRegistry = [];
+
+function loadUsers() {
+    try {
+        if (fs.existsSync(USERS_FILE)) {
+            _usersRegistry = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        } else {
+            _usersRegistry = [];
+            saveUsers();
+        }
+    } catch (e) {
+        console.error('[Registry] Failed to load users.json:', e.message);
+        _usersRegistry = [];
+    }
+}
+
+function saveUsers() {
+    try {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(_usersRegistry, null, 2), 'utf8');
+    } catch (e) {
+        console.error('[Registry] Failed to save users.json:', e.message);
+        throw e;
+    }
+}
+
+function registerOrUpdateUser(email, name, picture = null) {
+    const now = new Date().toISOString();
+    const existing = _usersRegistry.find(u => u.email === email);
+    if (!existing) {
+        const newUser = { email, name, plan: 'free', signedUpAt: now, lastActiveAt: now, messageCount: 0, loginCount: 1, blocked: false, picture };
+        _usersRegistry.push(newUser);
+        saveUsers();
+        return newUser;
+    } else {
+        existing.lastActiveAt = now;
+        existing.loginCount = (existing.loginCount || 0) + 1;
+        if (picture) existing.picture = picture;
+        saveUsers();
+        return existing;
+    }
+}
+
+function checkBlocked(email) {
+    if (!email) return false;
+    const user = _usersRegistry.find(u => u.email === email);
+    return user ? user.blocked === true : false;
+}
+
+function requireAdmin(req, res) {
+    const secret = req.headers['x-admin-secret'] || '';
+    if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return false;
+    }
+    return true;
+}
+
+loadUsers();
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(__dirname));
+// Serve static files but explicitly exclude users.json (registry must not be publicly accessible)
+app.use(express.static(__dirname, {
+    index: false,
+    setHeaders: (res, filePath) => {
+        if (path.basename(filePath) === 'users.json') {
+            res.status(403).end();
+        }
+    }
+}));
+app.use((req, res, next) => {
+    if (req.path === '/users.json') {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+});
 
 // Serve frontend (Next.js handles this, but backend root can just say API running)
 app.get('/', (req, res) => {
@@ -80,7 +161,7 @@ async function callCFVision(systemPrompt, userText, imageBase64) {
 
 // --- MAIN CHAT ---
 app.post('/api/chat', async (req, res) => {
-    const { message, history, deepThink, images } = req.body;
+    const { message, history, deepThink, images, groupChat, groupContext } = req.body;
 
     const webSearchKeywords = /\b(latest|breaking|news|weather|temperature|forecast|price|stock market|score|live score|trending|just happened|right now|this week|this month|2025|2026|who won|what happened|current|recent events|today|tonight|yesterday|this year|match|game|played|vs|versus|standings|results|update|release|launch|announced|dropped|happened|currently|live|ongoing|upcoming|schedule|fixture|transfer|signing|election|vote|winner|champion|title|record|streak)\b/i;
     // Detect if user is pasting content to process (summarize/rewrite/explain)
@@ -134,6 +215,9 @@ app.post('/api/chat', async (req, res) => {
         const chatHistory = history.map(msg => ({ role: msg.role, content: msg.content }));
         let sources = [];
 
+        // Use the same system prompt for both normal and group chat
+        const systemPrompt = expandEnvNewlines(process.env.SYSTEM_MESSAGE);
+
         // If web search needed, fetch real results first
         if (needsWebSearch) {
             try {
@@ -163,7 +247,7 @@ app.post('/api/chat', async (req, res) => {
             chatHistory.push({ role: 'user', content: userMsg });
         }
 
-        const reply = await callCF(expandEnvNewlines(process.env.SYSTEM_MESSAGE), chatHistory, 2048);
+        const reply = await callCF(systemPrompt, chatHistory, 2048);
         res.json({ reply, webSearched: needsWebSearch, sources, locationQuery });
     } catch (error) {
         console.error('CF Error:', error.response?.data || error.message);
@@ -361,7 +445,121 @@ app.post('/api/title', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+// ── Force logout registry ──────────────────────────────────────────
+const _forceLogoutSet = new Set();
+
+app.post('/api/admin/force-logout', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    _forceLogoutSet.add(email);
+    // Auto-clear after 5 minutes
+    setTimeout(() => _forceLogoutSet.delete(email), 5 * 60 * 1000);
+    res.json({ success: true });
+});
+
+// Clients poll this to check if they've been force-logged out
+app.post('/api/auth/check-session', (req, res) => {
+    const { email } = req.body;
+    if (email && _forceLogoutSet.has(email)) {
+        _forceLogoutSet.delete(email);
+        return res.json({ forceLogout: true });
+    }
+    // Also check if blocked
+    if (email && checkBlocked(email)) {
+        return res.json({ forceLogout: true, reason: 'blocked' });
+    }
+    res.json({ forceLogout: false });
+});
+
+// Check if an email is blocked (called at login time)
+app.post('/api/auth/check-blocked', (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.json({ blocked: false });
+    res.json({ blocked: checkBlocked(email) });
+});
+
+// ── Admin Routes ───────────────────────────────────────────────────
+app.get('/api/admin/users', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    res.json({ users: _usersRegistry });
+});
+
+app.post('/api/admin/block', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email } = req.body;
+    const user = _usersRegistry.find(u => u.email === email);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.blocked = true;
+    try { saveUsers(); } catch (e) { return res.status(500).json({ error: 'Failed to save' }); }
+    res.json({ success: true, user });
+});
+
+app.post('/api/admin/unblock', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email } = req.body;
+    const user = _usersRegistry.find(u => u.email === email);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.blocked = false;
+    try { saveUsers(); } catch (e) { return res.status(500).json({ error: 'Failed to save' }); }
+    res.json({ success: true, user });
+});
+
+app.post('/api/admin/update-plan', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email, plan } = req.body;
+    if (!VALID_PLANS.has(plan)) return res.status(400).json({ error: 'Invalid plan' });
+    const user = _usersRegistry.find(u => u.email === email);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.plan = plan;
+    try { saveUsers(); } catch (e) { return res.status(500).json({ error: 'Failed to save' }); }
+    res.json({ success: true, user });
+});
+
+app.post('/api/admin/register-user', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email, name, picture } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const user = registerOrUpdateUser(email, name || email.split('@')[0], picture || null);
+    res.json({ success: true, user });
+});
+
+app.post('/api/admin/delete-user', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email } = req.body;
+    const idx = _usersRegistry.findIndex(u => u.email === email);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+    _usersRegistry.splice(idx, 1);
+    try { saveUsers(); } catch (e) { return res.status(500).json({ error: 'Failed to save' }); }
+    res.json({ success: true });
+});
+
+app.post('/api/admin/send-email', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { to, subject, body } = req.body;
+    try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+        });
+        await transporter.sendMail({
+            from: `HELIX AI <${process.env.GMAIL_USER}>`,
+            to, subject,
+            html: body.includes('<') ? body : `<p style="font-family:sans-serif;color:#e0e0e0;background:#141414;padding:20px">${body.replace(/\n/g, '<br>')}</p>`
+        });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[Admin] send-email failed:', e.message);
+        res.status(500).json({ error: 'Failed to send email' });
+    }
+});
+
+// Initialize WebSocket server
+const io = initializeWebSocketServer(httpServer);
+
+httpServer.listen(PORT, () => {
     console.log(`\n🚀 Helix Backend running at http://localhost:${PORT}`);
+    console.log(`🔌 WebSocket server initialized`);
     console.log(`📁 Files will be run in: ${HELIX_WORKSPACE}\n`);
 });
