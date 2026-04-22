@@ -170,16 +170,6 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
           setInviteLink(`${window.location.origin}/group/${roomId}`)
           setError(null)
         } else if (result.error === 'Room not found') {
-          // Room was lost (server restart) — recreate it
-          console.log('[GroupChat] Room not found, recreating...')
-          wsClient.socket?.emit('create_room', (response: any) => {
-            if (response?.roomId) {
-              // Reconnect with new room ID — for now just show error with option to create new
-              setError('room_expired')
-            } else {
-              setError(result.error || 'Failed to connect to room')
-            }
-          })
           setError('room_expired')
         } else {
           setError(result.error || 'Failed to connect to room')
