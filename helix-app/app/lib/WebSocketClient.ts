@@ -43,9 +43,10 @@ export class WebSocketClient {
   private onUserTypingCallback: ((name: string, isTyping: boolean) => void) | null = null;
   private onHelixTypingCallback: ((isTyping: boolean) => void) | null = null;
 
-  constructor(serverUrl: string = 'http://localhost:8000') {
+  constructor(serverUrl: string = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000') {
     this.serverUrl = serverUrl;
   }
+
 
   /**
    * Connect to WebSocket server and join a room
