@@ -481,7 +481,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
                 Settings
               </div>
               <div 
-                onClick={() => { setDropdownOpen(false); window.open('/download.html', '_blank'); }}
+                onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}
                 style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
                 onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
                 onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
