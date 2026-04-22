@@ -930,8 +930,11 @@ export default function ChatApp() {
     let roomId: string
     try {
       const { io } = await import('socket.io-client')
+      const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168') || window.location.hostname.startsWith('172.'))
       const wsUrl = typeof window !== 'undefined'
-        ? `${window.location.protocol}//${window.location.hostname}:8000`
+        ? isLocalhost
+          ? `${window.location.protocol}//${window.location.hostname}:8000`
+          : `${window.location.protocol}//${window.location.hostname}`
         : 'http://localhost:8000'
       const socket = io(wsUrl, { transports: ['websocket', 'polling'] })
       

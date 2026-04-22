@@ -1,17 +1,17 @@
 services:
-  # Python Backend API
+  # Node.js Backend API (includes WebSocket server)
   - type: web
     name: helix-api
-    runtime: python
+    runtime: node
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python server.py
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: PORT
         value: 8000
-      - key: CLOUDFLARE_API_TOKEN
+      - key: CF_ACCOUNT_ID
         sync: false
-      - key: CLOUDFLARE_ACCOUNT_ID
+      - key: CF_API_TOKEN
         sync: false
       - key: GEMINI_API_KEY
         sync: false
@@ -21,8 +21,14 @@ services:
         sync: false
       - key: GMAIL_APP_PASSWORD
         sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
       - key: HELIX_WORKSPACE
         value: /opt/render/project/src/helix_workspace
+      - key: SYSTEM_MESSAGE
+        sync: false
 
   # Next.js Frontend
   - type: web
@@ -40,5 +46,12 @@ services:
           type: web
           name: helix-api
           property: host
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: helix-api
+          property: hostport
+      - key: ADMIN_SECRET
+        sync: false
       - key: NODE_ENV
         value: production

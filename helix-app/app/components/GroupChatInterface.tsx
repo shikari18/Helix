@@ -79,9 +79,12 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        // Use the same host as the page, port 8000 for WebSocket server
+        // Use same host as page — on production (Render) use standard port, locally use 8000
+        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168') || window.location.hostname.startsWith('172.'))
         const wsUrl = typeof window !== 'undefined'
-          ? `${window.location.protocol}//${window.location.hostname}:8000`
+          ? isLocalhost
+            ? `${window.location.protocol}//${window.location.hostname}:8000`
+            : `${window.location.protocol}//${window.location.hostname}`
           : 'http://localhost:8000'
         const wsClient = new WebSocketClient(wsUrl)
         wsClientRef.current = wsClient
