@@ -11,6 +11,8 @@ interface Props {
   currentChatId: string | null
   onNewChat: () => void
   onSelectChat: (id: string) => void
+  onLogout: () => void
+  onShareChat: () => void
   onLearnHacking?: () => void
   onStartGroupChat?: () => void
   isMobile?: boolean
