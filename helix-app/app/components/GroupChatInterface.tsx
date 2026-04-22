@@ -33,6 +33,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isTypingRef = useRef(false)
   const userScrolledRef = useRef(false)
+  const lastScrollTimeRef = useRef(0)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
@@ -211,8 +212,8 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   }, [roomId, currentUserId, userName, userPicture])
 
   useEffect(() => {
-    if (!userScrolledRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!userScrolledRef.current && Date.now() - lastScrollTimeRef.current >= 2000) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
     }
   }, [messages, helixTyping, typingUsers])
 
@@ -449,8 +450,9 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
           const el = scrollContainerRef.current
           if (!el) return
           const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-          if (distFromBottom > 50) {
+          if (distFromBottom > 80) {
             userScrolledRef.current = true
+            lastScrollTimeRef.current = Date.now()
           } else {
             userScrolledRef.current = false
           }

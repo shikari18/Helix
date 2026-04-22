@@ -175,6 +175,7 @@ export default function ChatApp() {
   const messagesEndRef = useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement>
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const userScrolledRef = useRef(false)
+  const lastScrollTimeRef = useRef(0)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
 
   // ── Per-account storage keys ──
@@ -330,15 +331,14 @@ export default function ChatApp() {
     localStorage.removeItem('hl_s')
   }, [])
 
-  const scrollToBottom = useCallback(() => {
-    if (userScrolledRef.current) return
+   const scrollToBottom = useCallback(() => {
+    if (userScrolledRef.current || Date.now() - lastScrollTimeRef.current < 2000) return
     const el = scrollContainerRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [])
 
-  // Always scrolls during typing regardless of user scroll state
   const scrollDuringTyping = useCallback(() => {
-    if (userScrolledRef.current) return
+    if (userScrolledRef.current || Date.now() - lastScrollTimeRef.current < 2000) return
     const el = scrollContainerRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [])
@@ -1143,8 +1143,9 @@ export default function ChatApp() {
                   const el = scrollContainerRef.current
                   if (!el) return
                   const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-                  if (distFromBottom > 50) {
+                  if (distFromBottom > 80) {
                     userScrolledRef.current = true
+                    lastScrollTimeRef.current = Date.now()
                     setShowScrollBtn(true)
                   } else {
                     userScrolledRef.current = false
