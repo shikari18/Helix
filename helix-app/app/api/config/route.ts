@@ -15,5 +15,7 @@ export async function GET(req: Request) {
   }
   
   const wsUrl = backend.startsWith('http') ? backend : `https://${backend}`
-  return NextResponse.json({ wsUrl })
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ''
+  
+  return NextResponse.json({ wsUrl, googleClientId })
 }

@@ -106,12 +106,33 @@ export default function SignupPage() {
     return () => { document.head.removeChild(script) }
   }, [])
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setError('')
     const google = (window as any).google
     if (!google) { setError('Google login not ready. Please try again.'); return }
+    
+    let clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    
+    // Fallback to dynamic runtime config if static build variable is empty
+    if (!clientId) {
+      try {
+        const res = await fetch('/api/config')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.googleClientId) clientId = data.googleClientId
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic googleClientId config", err)
+      }
+    }
+
+    if (!clientId) {
+      setError("Google Client ID is missing. Please configure it in your Render environment variables.");
+      return;
+    }
+
     google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      client_id: clientId,
       callback: async (response: any) => {
         if (!response.credential) { setError('Google login failed. Please try again.'); return }
         const payload = JSON.parse(atob(response.credential.split('.')[1]))
