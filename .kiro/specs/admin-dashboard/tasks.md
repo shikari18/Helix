@@ -65,7 +65,7 @@ Implement the Admin Dashboard feature incrementally: start with the server-side 
     - **Property 5: Unblocked users are not rejected at the Chat Endpoint**
     - **Validates: Requirements 4.6**
 
-- [ ] 4. Checkpoint — Ensure all backend tests pass
+- [x] 4. Checkpoint — Ensure all backend tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 5. Create Next.js API proxy routes for admin endpoints
@@ -130,7 +130,7 @@ Implement the Admin Dashboard feature incrementally: start with the server-side 
   - Show toast/inline error on 404 (user not found) and re-fetch user list
   - _Requirements: 2.1, 2.2, 3.1, 4.1, 4.3, 4.8, 5.1, 5.2, 6.3, 7.1, 7.4, 8.5_
 
-- [ ] 11. Final checkpoint — Ensure all tests pass
+- [x] 11. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

@@ -931,11 +931,10 @@ export default function ChatApp() {
     try {
       const { io } = await import('socket.io-client')
       const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168') || window.location.hostname.startsWith('172.'))
-      const wsUrl = typeof window !== 'undefined'
-        ? isLocalhost
-          ? `${window.location.protocol}//${window.location.hostname}:8000`
-          : `${window.location.protocol}//${window.location.hostname}`
-        : 'http://localhost:8000'
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
+        (isLocalhost
+          ? `http://${window.location.hostname}:8000`
+          : `https://${window.location.hostname}`)
       const socket = io(wsUrl, { transports: ['websocket', 'polling'] })
       
       roomId = await new Promise<string>((resolve, reject) => {

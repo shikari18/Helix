@@ -53,5 +53,10 @@ services:
           property: hostport
       - key: ADMIN_SECRET
         sync: false
+      - key: NEXT_PUBLIC_WS_URL
+        fromService:
+          type: web
+          name: helix-api
+          property: host
       - key: NODE_ENV
         value: production
