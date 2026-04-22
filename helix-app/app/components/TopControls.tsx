@@ -13,9 +13,10 @@ interface Props {
   isGroupChat?: boolean
   groupChatName?: string
   onGroupChatNameChange?: (name: string) => void
+  splitViewOpen?: boolean
 }
 
-export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, onToggleGhost, isGhostMode, chatActive, onShare, isGroupChat = false, groupChatName = 'New group chat', onGroupChatNameChange }: Props) {
+export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, onToggleGhost, isGhostMode, chatActive, onShare, isGroupChat = false, groupChatName = 'New group chat', onGroupChatNameChange, splitViewOpen = false }: Props) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(groupChatName)
   
@@ -106,9 +107,9 @@ export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, o
       {/* Chat active — share + new chat on right */}
       {!isGhostMode && chatActive && !isGroupChat && (
         <div style={{
-          position: 'fixed', top: 20, right: 20,
+          position: 'fixed', top: 20, right: splitViewOpen ? 'calc(50% + 20px)' : 20,
           display: 'flex', alignItems: 'center', gap: 10,
-          zIndex: 9999,
+          zIndex: 9999, transition: 'right 0.25s ease',
         }}>
           {/* Share button */}
           <button

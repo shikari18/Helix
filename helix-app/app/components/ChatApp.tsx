@@ -141,7 +141,14 @@ export default function ChatApp() {
         e.preventDefault()
         e.stopPropagation()
         const url = target.getAttribute('data-url')
-        if (url) setSplitViewUrl(url)
+        if (url) {
+          // On mobile, open in new tab instead of split view
+          if (window.innerWidth < 768) {
+            window.open(url, '_blank')
+          } else {
+            setSplitViewUrl(url)
+          }
+        }
       }
     }
     document.addEventListener('click', handleLinkClick, true)
@@ -850,6 +857,7 @@ export default function ChatApp() {
     setIsGroupChat(false)
     setGroupChatRoomId(null)
     setGroupChatName('New group chat')
+    setSplitViewUrl(null)
     setGreeting(randomGreeting())
     setNewChatKey(k => k + 1)
     setPageTitle('Helix')
@@ -1024,6 +1032,7 @@ export default function ChatApp() {
             isGroupChat={isGroupChat}
             groupChatName={groupChatName}
             onGroupChatNameChange={handleGroupChatNameChange}
+            splitViewOpen={!!splitViewUrl}
           />
         )}
 
