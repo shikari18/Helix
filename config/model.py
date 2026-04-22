@@ -295,8 +295,8 @@ def _call_cloudflare_vision(user_text: str, image_bytes: list, max_tokens: int) 
 # STARTUP
 # ─────────────────────────────────────────────────────────────────────
 if USE_OWN_MODEL:
-    print("🧠 Loading HELIX model...")
+    print("Loading HELIX model...")
     load_own_model()
-    print("✅ HELIX model loaded")
+    print("HELIX model loaded")
 else:
-    print("🔌 Using Cloudflare AI (testing mode)")
+    print("Using Cloudflare AI (testing mode)")
