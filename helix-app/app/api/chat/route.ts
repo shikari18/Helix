@@ -7,20 +7,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const host = req.headers.get('host') || ''
     const body = await req.json()
     
-    // Determine the public or private backend URL reliably
-    let backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || ''
-    
-    // Fallback heuristic: If we are on Render (domain contains -app-), dynamically infer the api container URL
-    if (!backendUrl || backendUrl.includes('localhost') || !backendUrl.includes('.')) {
-      if (host.includes('-app-')) {
-        backendUrl = `https://${host.replace('-app-', '-api-')}`
-      } else {
-        backendUrl = 'http://localhost:8000'
-      }
-    }
+    // Determine backend URL cleanly. Strongly prefer the explicit public URL string to bypass any internal cluster routing issues.
+    let backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000'
 
     // Construct the backend URL
     const url = `${backendUrl.startsWith('http') ? backendUrl : `https://${backendUrl}`}/api/chat`
