@@ -79,7 +79,11 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        const wsClient = new WebSocketClient('http://localhost:8000')
+        // Use the same host as the page, port 8000 for WebSocket server
+        const wsUrl = typeof window !== 'undefined'
+          ? `${window.location.protocol}//${window.location.hostname}:8000`
+          : 'http://localhost:8000'
+        const wsClient = new WebSocketClient(wsUrl)
         wsClientRef.current = wsClient
 
         wsClient.onMessage((message) => {

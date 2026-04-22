@@ -15,13 +15,9 @@ const messageHandler = require('./services/MessageHandler');
 function initializeWebSocketServer(httpServer) {
     const io = new Server(httpServer, {
         cors: {
-            origin: [
-                process.env.FRONTEND_URL || 'http://localhost:3000',
-                'http://localhost:3001',
-                'http://localhost:3002',
-            ],
+            origin: '*',
             methods: ['GET', 'POST'],
-            credentials: true
+            credentials: false
         },
         pingTimeout: 30000,
         pingInterval: 25000

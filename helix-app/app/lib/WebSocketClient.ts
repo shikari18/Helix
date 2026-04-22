@@ -43,7 +43,7 @@ export class WebSocketClient {
   private onUserTypingCallback: ((name: string, isTyping: boolean) => void) | null = null;
   private onHelixTypingCallback: ((isTyping: boolean) => void) | null = null;
 
-  constructor(serverUrl: string = 'http://localhost:8000') {
+  constructor(serverUrl: string = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000') {
     this.serverUrl = serverUrl;
   }
 

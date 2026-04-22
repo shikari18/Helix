@@ -917,7 +917,10 @@ export default function ChatApp() {
     let roomId: string
     try {
       const { io } = await import('socket.io-client')
-      const socket = io('http://localhost:8000', { transports: ['websocket', 'polling'] })
+      const wsUrl = typeof window !== 'undefined'
+        ? `${window.location.protocol}//${window.location.hostname}:8000`
+        : 'http://localhost:8000'
+      const socket = io(wsUrl, { transports: ['websocket', 'polling'] })
       
       roomId = await new Promise<string>((resolve, reject) => {
         socket.on('connect', () => {
