@@ -240,12 +240,6 @@ export default function ChatApp() {
     return () => clearInterval(t)
   }, [])
 
-  // Listen for group chat recreation request from GroupChatInterface
-  useEffect(() => {
-    const handler = () => startGroupChat()
-    window.addEventListener('helix:new-group-chat', handler)
-    return () => window.removeEventListener('helix:new-group-chat', handler)
-  }, [startGroupChat])
   useEffect(() => {
     const poll = setInterval(async () => {
       const email = typeof window !== 'undefined' ? localStorage.getItem('helix_user_email') : null
