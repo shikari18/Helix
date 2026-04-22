@@ -65,6 +65,8 @@ export class WebSocketClient {
           reconnectionDelayMax: 30000,
         });
 
+        let resolved = false;
+
         // Connection established
         this.socket.on('connect', () => {
           console.log('[WebSocketClient] Connected to server');
@@ -77,6 +79,8 @@ export class WebSocketClient {
 
         // Join room after connection
         this.socket.emit('join_room', { roomId, participant }, (response: any) => {
+          if (resolved) return;
+          resolved = true;
           if (response.error) {
             console.error('[WebSocketClient] Failed to join room:', response.error);
             resolve({ success: false, error: response.error });
@@ -157,6 +161,10 @@ export class WebSocketClient {
         this.socket.on('connect_error', (error: Error) => {
           console.error('[WebSocketClient] Connection error:', error.message);
           this.setConnectionState('disconnected');
+          if (!resolved) {
+            resolved = true;
+            resolve({ success: false, error: 'Connection error: ' + error.message });
+          }
         });
 
       } catch (error) {
