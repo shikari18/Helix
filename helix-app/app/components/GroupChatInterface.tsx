@@ -164,12 +164,23 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
         const result = await wsClient.connect(roomId, participant)
 
         if (result.success) {
-          // Store the ID the server knows us by
           myParticipantIdRef.current = currentUserId
           setMessages(result.messages || [])
           setParticipants(result.participants || [])
           setInviteLink(`${window.location.origin}/group/${roomId}`)
           setError(null)
+        } else if (result.error === 'Room not found') {
+          // Room was lost (server restart) — recreate it
+          console.log('[GroupChat] Room not found, recreating...')
+          wsClient.socket?.emit('create_room', (response: any) => {
+            if (response?.roomId) {
+              // Reconnect with new room ID — for now just show error with option to create new
+              setError('room_expired')
+            } else {
+              setError(result.error || 'Failed to connect to room')
+            }
+          })
+          setError('room_expired')
         } else {
           setError(result.error || 'Failed to connect to room')
         }
@@ -324,11 +335,25 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   const uniqueParticipants = participants.filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
   const otherParticipants = uniqueParticipants.filter(p => p.id !== currentUserId)
 
-  if (error && error.includes('Room not found')) {
+  if (error && (error.includes('Room not found') || error === 'room_expired')) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#141414', flexDirection: 'column', gap: 16, fontFamily: 'inherit' }}>
+        <div style={{ fontSize: 32 }}>💬</div>
+        <h2 style={{ color: '#fff', margin: 0, fontSize: 18 }}>Group chat expired</h2>
+        <p style={{ color: '#888', margin: 0, fontSize: 14, textAlign: 'center', maxWidth: 280 }}>This room no longer exists. The server may have restarted.</p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onBack} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #3d3d3d', borderRadius: 8, color: '#888', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Go Back</button>
+          <button onClick={() => { onBack(); setTimeout(() => window.dispatchEvent(new CustomEvent('helix:new-group-chat')), 100) }} style={{ padding: '10px 20px', background: '#fff', border: 'none', borderRadius: 8, color: '#000', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>New Group Chat</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && error !== 'room_expired') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#141414', flexDirection: 'column', gap: 16 }}>
-        <h2 style={{ color: '#fff', margin: 0 }}>Room Not Found</h2>
-        <p style={{ color: '#888', margin: 0 }}>This group chat doesn't exist or has expired.</p>
+        <h2 style={{ color: '#fff', margin: 0 }}>Connection Error</h2>
+        <p style={{ color: '#888', margin: 0 }}>{error}</p>
         <button onClick={onBack} style={{ padding: '10px 24px', background: '#fff', border: 'none', borderRadius: 8, color: '#000', fontWeight: 600, cursor: 'pointer' }}>Go Back</button>
       </div>
     )

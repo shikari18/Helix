@@ -107,6 +107,12 @@ export default function ChatApp() {
       const savedRoomId = localStorage.getItem('helix_group_room_id')
       const savedGroupName = localStorage.getItem('helix_group_name')
       if (savedGroupChat === 'true' && savedRoomId) {
+        // Verify the room still exists before restoring
+        fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/admin/users`, {
+          method: 'GET',
+          headers: { 'X-Admin-Secret': 'helix-admin-secret-2026' }
+        }).catch(() => {})
+        // Just restore — GroupChatInterface will handle room_expired if server restarted
         setIsGroupChat(true)
         setGroupChatRoomId(savedRoomId)
         setGroupChatName(savedGroupName || 'New group chat')
@@ -234,7 +240,12 @@ export default function ChatApp() {
     return () => clearInterval(t)
   }, [])
 
-  // Poll every 10s to check if admin has blocked or force-logged out this account
+  // Listen for group chat recreation request from GroupChatInterface
+  useEffect(() => {
+    const handler = () => startGroupChat()
+    window.addEventListener('helix:new-group-chat', handler)
+    return () => window.removeEventListener('helix:new-group-chat', handler)
+  }, [startGroupChat])
   useEffect(() => {
     const poll = setInterval(async () => {
       const email = typeof window !== 'undefined' ? localStorage.getItem('helix_user_email') : null
