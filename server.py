@@ -296,7 +296,15 @@ async def on_join_room(sid, data):
     
     room = room_manager.get_room(room_id)
     if not room:
-        return {"error": "Room not found"}
+        print(f"[WebSocket] Room {room_id} not found in memory. Creating it dynamically.")
+        room_manager.rooms[room_id] = {
+            "id": room_id,
+            "createdAt": int(time.time() * 1000),
+            "participants": {},
+            "messages": [],
+            "lastActivity": int(time.time() * 1000)
+        }
+        room = room_manager.get_room(room_id)
 
     is_rejoin = participant.get("id") in room["participants"]
     participant_data = room_manager.add_participant(room_id, participant)
