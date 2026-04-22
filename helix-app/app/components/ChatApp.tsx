@@ -1143,7 +1143,7 @@ export default function ChatApp() {
                   const el = scrollContainerRef.current
                   if (!el) return
                   const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-                  if (distFromBottom > 120) {
+                  if (distFromBottom > 50) {
                     userScrolledRef.current = true
                     setShowScrollBtn(true)
                   } else {

@@ -32,6 +32,8 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   const wsClientRef = useRef<WebSocketClient | null>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isTypingRef = useRef(false)
+  const userScrolledRef = useRef(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
 
@@ -209,7 +211,9 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   }, [roomId, currentUserId, userName, userPicture])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!userScrolledRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages, helixTyping, typingUsers])
 
   const handleSend = async () => {
@@ -438,7 +442,20 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
       </div>
 
       {/* Chat Area */}
-      <div className="group-chat-messages">
+      <div 
+        className="group-chat-messages"
+        ref={scrollContainerRef}
+        onScroll={() => {
+          const el = scrollContainerRef.current
+          if (!el) return
+          const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+          if (distFromBottom > 50) {
+            userScrolledRef.current = true
+          } else {
+            userScrolledRef.current = false
+          }
+        }}
+      >
         {messages.length === 0 && (
           <div className="empty-state">
             <p className="empty-time">TODAY {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toUpperCase()}</p>

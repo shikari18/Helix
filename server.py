@@ -463,8 +463,10 @@ async def api_chat(req: ChatRequest):
             chat_history.append({"role": "user", "content": user_msg})
 
         reply = generate(system_prompt, chat_history, 4096)
+        print(f"[API] Generated reply ({len(reply)} chars)")
         return {"reply": reply, "webSearched": bool(sources), "sources": sources, "locationQuery": location_query}
     except Exception as e:
+        print(f"[ERROR] Inference failed: {e}")
         raise HTTPException(status_code=500, detail=f"Inference error: {e}")
 
 @app.post("/api/search")
