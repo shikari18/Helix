@@ -479,7 +479,7 @@ export default function InputSection({ value, onChange, onSend, chatMode, onChat
                           if (opt.mode === 'agent') {
                             setShowAgentUpgradePopup(true)
                           } else {
-                            setChatMode(opt.mode)
+                            onChatModeChange(opt.mode)
                           }
                         }}
                       >
