@@ -22,6 +22,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
   const [searchOpen, setSearchOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showClearGroupsConfirm, setShowClearGroupsConfirm] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -139,8 +140,13 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
   )
 
   const handleClearAll = () => {
-    setChatList([])
+    setChatList(prev => prev.filter(c => c.isGroup))
     setShowClearConfirm(false)
+  }
+
+  const handleClearAllGroups = () => {
+    setChatList(prev => prev.filter(c => !c.isGroup))
+    setShowClearGroupsConfirm(false)
   }
 
   return (
@@ -219,6 +225,10 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
         {/* Group Chat */}
         <button
           onClick={() => {
+            if (groupChats.length >= 4) {
+              alert("You can only have up to 4 group chats. Please delete an existing one to create or join another.")
+              return
+            }
             onStartGroupChat?.()
             onClose()
           }}
@@ -261,6 +271,14 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 28px 8px', marginTop: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GROUP CHATS</span>
+              <button
+                onClick={() => setShowClearGroupsConfirm(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#666', fontFamily: 'inherit', transition: 'color 0.2s' }}
+                onMouseOver={e => (e.currentTarget.style.color = '#b0b0b0')}
+                onMouseOut={e => (e.currentTarget.style.color = '#666')}
+              >
+                Clear All
+              </button>
             </div>
             <div style={{ padding: '0 16px' }}>
               {groupChats.map(chat => <ChatItem key={chat.id} chat={chat} />)}
@@ -346,6 +364,56 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
                 </button>
                 <button
                   onClick={handleClearAll}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 10,
+                    border: 'none', background: '#e53935',
+                    color: '#fff', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = '#c62828')}
+                  onMouseOut={e => (e.currentTarget.style.background = '#e53935')}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clear Group Chats Confirmation Dialog */}
+        {showClearGroupsConfirm && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 400,
+            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              background: '#1a1a1a', border: '1px solid #2d2d2d',
+              borderRadius: 16, padding: 28, width: 320,
+              boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+            }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10 }}>Clear All Group Chats</h3>
+              <p style={{ fontSize: 14, color: '#888', lineHeight: 1.6, marginBottom: 24 }}>
+                Are you sure you want to clear all group chats?
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setShowClearGroupsConfirm(false)}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 10,
+                    border: '1px solid #3d3d3d', background: '#2d2d2d',
+                    color: '#fff', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
+                  onMouseOut={e => (e.currentTarget.style.background = '#2d2d2d')}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearAllGroups}
                   style={{
                     flex: 1, padding: '12px', borderRadius: 10,
                     border: 'none', background: '#e53935',

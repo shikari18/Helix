@@ -79,19 +79,31 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        // Determine WebSocket server URL
-        // On production: use NEXT_PUBLIC_WS_URL env var (set to the helix-api Render URL)
-        // On localhost: use port 8000
-        const isLocalhost = typeof window !== 'undefined' && (
-          window.location.hostname === 'localhost' ||
-          window.location.hostname === '127.0.0.1' ||
-          window.location.hostname.startsWith('192.168') ||
-          window.location.hostname.startsWith('172.')
-        )
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
-          (isLocalhost
+        let wsUrl = process.env.NEXT_PUBLIC_WS_URL || ''
+        
+        // Dynamically fetch from our proxy config just in case static env substitution failed
+        if (!wsUrl || (typeof window !== 'undefined' && wsUrl.includes(window.location.hostname))) {
+          try {
+            const res = await fetch('/api/config')
+            if (res.ok) {
+              const data = await res.json()
+              if (data.wsUrl) wsUrl = data.wsUrl
+            }
+          } catch (err) {
+            console.error('Failed to fetch dynamic wsUrl config', err)
+          }
+        }
+
+        // Fallback to localhost if all else fails natively
+        if (!wsUrl && typeof window !== 'undefined') {
+          const isLocalhost = window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname.startsWith('192.168')
+          wsUrl = isLocalhost
             ? `http://${window.location.hostname}:8000`
-            : `https://${window.location.hostname}`)
+            : `https://${window.location.hostname}`
+        }
+
         const wsClient = new WebSocketClient(wsUrl)
         wsClientRef.current = wsClient
 

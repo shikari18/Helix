@@ -645,7 +645,7 @@ h1 {
 /* --- INPUT SECTION --- */
 .input-section {
   width: 100%;
-  max-width: 910px;
+  max-width: 800px;
   margin: 0 auto;
   align-self: center;
   margin-bottom: 19px;
@@ -678,7 +678,7 @@ h1 {
 
 .input-container {
   width: 100%;
-  max-width: 910px;
+  max-width: 800px;
   margin: 0 auto;
   background: #1a1a1a;
   border-radius: 28px;
