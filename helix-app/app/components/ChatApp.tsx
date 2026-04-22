@@ -1022,6 +1022,7 @@ export default function ChatApp() {
           onLogout={handleLogout}
           onShareChat={() => setShareModalOpen(true)}
           onStartGroupChat={startGroupChat}
+          isMobile={isMobile}
         />
       )}
 

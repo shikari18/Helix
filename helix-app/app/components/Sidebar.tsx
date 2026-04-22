@@ -11,13 +11,12 @@ interface Props {
   currentChatId: string | null
   onNewChat: () => void
   onSelectChat: (id: string) => void
-  onLogout: () => void
-  onShareChat: () => void
   onLearnHacking?: () => void
   onStartGroupChat?: () => void
+  isMobile?: boolean
 }
 
-export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onStartGroupChat }: Props) {
+export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onStartGroupChat, isMobile = false }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
