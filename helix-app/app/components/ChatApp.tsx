@@ -685,9 +685,10 @@ export default function ChatApp() {
   ]
 
   const generateChatTitle = useCallback(async (firstMessage: string, chatId: string) => {
-    const isGreeting = /^(hey|hi|hello|sup|yo|hiya|howdy|what'?s up|how are you|thanks|ok|bye)[!?.]*$/i.test(firstMessage.trim())
+    const trimmed = firstMessage.trim().toLowerCase()
+    const isGreeting = /^(hey|hi|hello|sup|yo|hiya|howdy|what'?s up|how are you|thanks|ok|bye)/i.test(trimmed)
     
-    if (isGreeting) {
+    if (isGreeting && trimmed.split(' ').length < 6) {
       const title = CASUAL_TITLES[Math.floor(Math.random() * CASUAL_TITLES.length)]
       setChatList(prev => prev.map(c => c.id === chatId ? { ...c, title } : c))
       setPageTitle(title)
@@ -1035,6 +1036,7 @@ export default function ChatApp() {
           onShareChat={() => setShareModalOpen(true)}
           onStartGroupChat={startGroupChat}
           isMobile={isMobile}
+          plan={plan || 'free'}
         />
       )}
 

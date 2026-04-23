@@ -16,9 +16,17 @@ interface Props {
   onLearnHacking?: () => void
   onStartGroupChat?: () => void
   isMobile?: boolean
+  plan?: string
 }
 
-export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onStartGroupChat, isMobile = false }: Props) {
+export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onStartGroupChat, isMobile = false, plan = 'free' }: Props) {
+  const getPlanName = () => {
+    if (plan === 'ultra') return 'Ultra'
+    if (plan === 'proplus') return 'Pro+'
+    if (plan === 'pro') return 'Pro'
+    return 'Free'
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -33,15 +41,6 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
   const userPicture = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_picture') || '') : ''
   const userInitial = userName.charAt(0).toUpperCase()
   
-  const getPlanName = () => {
-    if (typeof window === 'undefined') return 'Free plan'
-    const plan = localStorage.getItem('helix_plan') || 'free'
-    if (plan === 'ultra') return 'Ultra'
-    if (plan === 'proplus') return 'Pro+'
-    if (plan === 'pro') return 'Pro'
-    return 'Free plan'
-  }
-
   const filtered = chatList.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
   
   // Separate group chats from regular chats
@@ -171,6 +170,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
         {/* Header */}
         <div style={{ padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d2d2d' }}>
           <span style={{ fontSize: 20, fontWeight: 600, color: '#fff' }}>Helix</span>
+          <span style={{ fontSize: 12, color: '#666', background: '#2d2d2d', padding: '2px 8px', borderRadius: 6 }}>{getPlanName()}</span>
         </div>
 
         {/* New Chat */}
@@ -458,68 +458,63 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
               {/* Close on outside click */}
               <div onClick={() => setDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
               <div style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: 0,
-                right: 0,
-                background: '#2d2d2d',
-                border: '1px solid #3d3d3d',
-                borderRadius: 12,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                position: 'fixed',
+                bottom: isMobile ? '80px' : '20px',
+                left: isMobile ? '12px' : '272px', // sidebar width (260) + gap (12)
+                width: isMobile ? 'calc(100% - 24px)' : '220px',
+                background: '#1a1a1a',
+                border: '1px solid #2d2d2d',
+                borderRadius: 14,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
                 zIndex: 300,
                 overflow: 'hidden',
-                marginBottom: 8,
+                animation: 'slideUp 0.2s ease',
               }}>
-              <div 
-                onClick={() => { setDropdownOpen(false); /* Open settings */ }}
-                style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/>
-                </svg>
-                Settings
-              </div>
-              {!isMobile && (
-                <div 
-                  onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}
-                  style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                  </svg>
-                  Download Helix on your PC
+                <style>{`
+                  .menu-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: #b0b0b0; display: flex; alignItems: center; gap: 10px; transition: all 0.2s; }
+                  .menu-item:hover { background: #242424; color: #fff; }
+                `}</style>
+
+                {/* Plans Management */}
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid #2d2d2d', background: '#1c1c1c' }}>
+                   <div style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>Current Plan</div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{getPlanName()}</span>
+                      <Link href="/pricing" onClick={() => setDropdownOpen(false)} style={{ fontSize: 11, color: '#5a5aff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</Link>
+                   </div>
+                   <div 
+                      onClick={() => { setDropdownOpen(false); window.open('/cancel-plan', '_blank') }}
+                      style={{ fontSize: 11, color: '#444', marginTop: 8, cursor: 'pointer', transition: 'color 0.2s' }}
+                      onMouseOver={e => e.currentTarget.style.color = '#777'}
+                      onMouseOut={e => e.currentTarget.style.color = '#444'}
+                   >
+                     Cancel plan
+                   </div>
                 </div>
-              )}
-              <div 
-                onClick={() => { setDropdownOpen(false); window.open('https://helix.com/learn', '_blank'); }}
-                style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                Learn more
-              </div>
-              <div style={{ height: 1, background: '#3d3d3d', margin: '4px 0' }} />
-              <div 
-                onClick={() => { 
-                  setDropdownOpen(false)
-                  onLogout()
-                }}
-                style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 12, transition: 'background 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Log out
-              </div>
+
+                <div className="menu-item" onClick={() => { setDropdownOpen(false); /* Open settings */ }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/></svg>
+                  Settings
+                </div>
+
+                {!isMobile && (
+                  <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    Download App
+                  </div>
+                )}
+
+                <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('https://helix.com/learn', '_blank'); }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Learn more
+                </div>
+
+                <div style={{ height: 1, background: '#2d2d2d', margin: '4px 0' }} />
+
+                <div className="menu-item" style={{ color: '#ff4d4d' }} onClick={() => { setDropdownOpen(false); onLogout() }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Log out
+                </div>
               </div>
             </>
           )}

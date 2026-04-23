@@ -460,10 +460,11 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
       >
         {messages.length === 0 && (
           <div className="empty-state">
-            <p className="empty-time">TODAY {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toUpperCase()}</p>
-            <p className="empty-creator">{userName} created the group chat.</p>
-            <p className="empty-note">Your personal Helix memory is never used in group chats.</p>
-            <button onClick={() => setShowInvitePopup(true)} className="invite-btn">Invite with link</button>
+            <div style={{ background: '#1a1a1a', border: '1px solid #2d2d2d', padding: '16px 24px', borderRadius: 16, maxWidth: 320 }}>
+              <p className="empty-creator" style={{ marginBottom: 8 }}>{userName} created the group</p>
+              <p className="empty-note">Helix is connected but will not use personal memory in groups.</p>
+              <button onClick={() => setShowInvitePopup(true)} className="invite-btn" style={{ marginTop: 12 }}>Copy Invite Link</button>
+            </div>
           </div>
         )}
 
@@ -485,24 +486,25 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
           if (isOwn) {
             return (
-              <div key={msg.id} style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div key={msg.id} style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
                 {(msg as any).images?.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 8 }}>
                     {(msg as any).images.map((src: string, i: number) => (
-                      <img key={i} src={src} alt="" style={{ maxWidth: 200, maxHeight: 200, borderRadius: 12, objectFit: 'cover', border: '1px solid #3d3d3d' }} />
+                      <img key={i} src={src} alt="" style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333' }} />
                     ))}
                   </div>
                 )}
                 {msg.content && msg.content !== '📷 Image' && (
                   <div style={{
                     background: '#2d2d2d',
-                    padding: '12px 18px',
-                    borderRadius: 18,
+                    padding: '10px 16px',
+                    borderRadius: '18px 18px 4px 18px',
                     border: '1px solid #3d3d3d',
-                    maxWidth: '75%',
-                    fontSize: 17,
-                    lineHeight: 1.6,
+                    maxWidth: '85%',
+                    fontSize: 16,
+                    lineHeight: 1.5,
                     color: '#fff',
+                    wordBreak: 'break-word',
                   }}>
                     {msg.content}
                   </div>

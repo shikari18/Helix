@@ -114,45 +114,45 @@ class MessageHandler:
             return False
         
         # Check for "helix" or "@helix" patterns
-        return bool(re.search(r'\bhelix\b|@helix', content, re.IGNORECASE))
+        return bool(re.search(r'\bhelix\b|^helix|@helix', content, re.IGNORECASE))
 
     async def forward_to_helix(self, message: dict, room_history: List[dict], participant_count: int, participant_names: List[str] = []) -> str:
-        """Forward message to Helix AI backend (which is now this same server)."""
+        """Forward message to Helix AI backend (non-blocking)."""
         import os
-        # Since we are moving to a single backend, we can potentially call the internal function
-        # but for compatibility, we can still hit the API or use a local import.
-        # For now, let's assume we can call the internal chat logic or hit http://localhost:PORT/api/chat
+        import asyncio
         
         PORT = os.getenv("PORT", "8000")
-        try:
-            # Prepare history in the format Helix expects
-            history = []
-            for msg in room_history[-10:]:
-                role = "assistant" if msg.get("isHelixResponse") else "user"
-                history.append({
-                    "role": role,
-                    "content": f"{msg.get('senderName')}: {msg.get('content')}"
-                })
+        
+        def _call_api():
+            try:
+                # Prepare history
+                history = []
+                for msg in room_history[-15:]:
+                    role = "assistant" if msg.get("isHelixResponse") else "user"
+                    history.append({
+                        "role": role,
+                        "content": f"{msg.get('senderName')}: {msg.get('content')}"
+                    })
 
-            payload = {
-                "message": message.get("content"),
-                "history": history,
-                "images": message.get("images") if message.get("images") else [],
-                "groupChat": True,
-                "participantNames": participant_names,
-                "participantCount": participant_count
-            }
+                payload = {
+                    "message": message.get("content"),
+                    "history": history,
+                    "images": message.get("images") if message.get("images") else [],
+                    "groupChat": True,
+                    "participantNames": participant_names,
+                    "participantCount": participant_count
+                }
 
-            # We use a loopback request to the same server
-            # Alternatively, we could import the chat function from server.py once restructured.
-            # But hitting the local API is safer for porting logic exactly.
-            response = requests.post(f"http://localhost:{PORT}/api/chat", json=payload, timeout=30)
-            response.raise_for_status()
-            
-            return response.json().get("reply", "Helix is silent.")
-        except Exception as e:
-            print(f"[MessageHandler] Helix API error: {e}")
-            raise Exception("Helix is temporarily unavailable. Try again in a moment.")
+                # Use 127.0.0.1 instead of localhost for more reliable binding resolution
+                response = requests.post(f"http://127.0.0.1:{PORT}/api/chat", json=payload, timeout=40)
+                response.raise_for_status()
+                return response.json().get("reply", "Helix is silent.")
+            except Exception as e:
+                print(f"[MessageHandler] Threaded API error: {e}")
+                return "Helix is temporarily unavailable."
+
+        # Run the blocking requests code in a separate thread
+        return await asyncio.to_thread(_call_api)
 
 # Singleton instance
 message_handler = MessageHandler()
