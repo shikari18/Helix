@@ -128,10 +128,13 @@ class MessageHandler:
                 # Prepare history
                 history = []
                 for msg in room_history[-15:]:
-                    role = "assistant" if msg.get("isHelixResponse") else "user"
+                    is_helix = msg.get("isHelixResponse")
+                    role = "assistant" if is_helix else "user"
+                    # Assistant role doesn't need its name prefixed in history
+                    content = msg.get('content') if is_helix else f"{msg.get('senderName')}: {msg.get('content')}"
                     history.append({
                         "role": role,
-                        "content": f"{msg.get('senderName')}: {msg.get('content')}"
+                        "content": content
                     })
 
                 payload = {

@@ -24,6 +24,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [isDictating, setIsDictating] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   // The participant ID the server assigned to ME after joining
   const myParticipantIdRef = useRef<string | null>(null)
 
@@ -112,17 +113,14 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
         wsClient.onMessage((message) => {
           setMessages(prev => {
-            // deduplicate
             if (prev.find(m => m.id === message.id)) return prev
             return [...prev, message]
           })
-          // clear typing for that sender
           if (message.isHelixResponse) {
             setHelixTyping(false)
           } else {
             setTypingUsers(prev => prev.filter(n => n !== message.senderName))
           }
-          // Push notification when tab is hidden
           if (
             typeof window !== 'undefined' &&
             'Notification' in window &&
@@ -138,6 +136,19 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
             })
           }
         })
+
+        wsClient.onUserTyping((name, isTyping) => {
+          if (isTyping) {
+            setTypingUsers(prev => prev.includes(name) ? prev : [...prev, name])
+          } else {
+            setTypingUsers(prev => prev.filter(n => n !== name))
+          }
+        })
+
+        wsClient.onHelixTyping((isTyping) => {
+          setHelixTyping(isTyping)
+        })
+
 
         wsClient.onParticipantJoin((participant) => {
           setParticipants(prev => {
@@ -246,13 +257,6 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
       images: imagesToSend,
       isHelixResponse: false,
     } as any)
-
-    // Show helix typing if it will respond
-    const isOnlyCreator = participants.filter(p => p.name !== userName && p.name !== 'Helix AI').length === 0
-    const hasHelixMention = /helix|@helix/i.test(messageContent)
-    if (hasHelixMention || isOnlyCreator) {
-      setHelixTyping(true)
-    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -423,8 +427,8 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
       {/* Participant avatars — stacked chain at top right */}
       <div className="participants-row">
         {/* Helix first (leftmost visually due to row-reverse) */}
-        <div className="avatar-wrap helix-avatar" title="Helix AI (System)">
-          <div className="avatar-initial" style={{ background: '#5a5aff', color: '#fff' }}>H</div>
+        <div className="avatar-wrap helix-avatar" title="Helix AI">
+          <img src="/image.png" alt="Helix" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'contain', background: '#000' }} />
         </div>
 
         {/* Current user */}
@@ -492,11 +496,16 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
           if (isOwn) {
             return (
-              <div key={msg.id} style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
                 {(msg as any).images?.length > 0 && (
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 8 }}>
                     {(msg as any).images.map((src: string, i: number) => (
-                      <img key={i} src={src} alt="" style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333' }} />
+                      <img 
+                        key={i} 
+                        src={src} 
+                        alt="" 
+                        onClick={() => setSelectedImage(src)}
+                        style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333', cursor: 'zoom-in' }} 
+                      />
                     ))}
                   </div>
                 )}
@@ -526,13 +535,19 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
               ) : (
                 <div style={{ fontSize: 12, color: '#666' }}>{msg.senderName}</div>
               )}
-              {(msg as any).images?.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-                  {(msg as any).images.map((src: string, i: number) => (
-                    <img key={i} src={src} alt="" style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333' }} />
-                  ))}
-                </div>
-              )}
+                {(msg as any).images?.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+                    {(msg as any).images.map((src: string, i: number) => (
+                      <img 
+                        key={i} 
+                        src={src} 
+                        alt="" 
+                        onClick={() => setSelectedImage(src)}
+                        style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333', cursor: 'zoom-in' }} 
+                      />
+                    ))}
+                  </div>
+                )}
               {msg.content && msg.content !== '📷 Image' && (
                 <div style={{
                   background: isHelix ? 'transparent' : '#1a1a1a',
@@ -592,6 +607,17 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
         )}
 
         <div ref={messagesEndRef} />
+
+        {/* Lightbox Modal */}
+        {selectedImage && (
+          <div 
+            onClick={() => setSelectedImage(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', animation: 'fadeIn 0.2s ease' }}
+          >
+            <img src={selectedImage} alt="" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: 12 }} />
+            <button style={{ position: 'absolute', top: 30, right: 30, background: 'none', border: 'none', color: '#fff', fontSize: 40, cursor: 'pointer' }}>×</button>
+          </div>
+        )}
       </div>
 
       {/* Input */}

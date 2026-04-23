@@ -369,7 +369,10 @@ async def on_send_message(sid, data):
     
     room = room_manager.get_room(room_id)
     p_count = len(room["participants"])
-    should_respond = p_count == 1 or message_handler.detect_helix_mention(processed_msg["content"])
+    
+    # Proactive response: 1on1, explicit mention, or 25% chance in group active talk
+    mention = message_handler.detect_helix_mention(processed_msg["content"])
+    should_respond = p_count == 1 or mention or (random.random() < 0.25 and len(processed_msg["content"]) > 3)
 
     if should_respond:
         try:
@@ -434,9 +437,14 @@ async def api_chat(req: ChatRequest):
     group_chat_context = ""
     if req.groupChat:
         part_str = "s" if req.participantCount != 1 else ""
-        creator_str = "Currently only the creator is in the chat — respond to all their messages naturally." if req.isOnlyCreator else "Participants: you know who is in the room. Address people by name when relevant."
-        group_chat_context = f"\n\n## GROUP CHAT MODE\nYou are in a group chat with {req.participantCount} participant{part_str}. {creator_str} Behave exactly as you do in normal chat — same personality, same rules, same fulfillment policy. Do NOT play it safe here. Everyone is already authorized."
-
+        name_list = ", ".join(req.participantNames) if req.participantNames else "the group"
+        group_chat_context = (
+            f"\n\n## GROUP CHAT MODE\n"
+            f"You are in a group chat with {req.participantCount} participant{part_str}: {name_list}. "
+            "Address people by their names. Match the group's energy—if they joke, joke back. "
+            "Keep responses SNAPPY and SHORT. Use emojis. If someone is wrong, point it out jokingly (e.g. 'no no 😭 thats not right shikari...'). "
+            "You are a member of the conversation, not just a tool."
+        )
     agent_context = (
         "\n\n## CURRENT MODE\nThe user is currently in **Agent Mode**. When they ask you to perform an action (like scanning WiFi, running recon, etc.), you MUST respond with ONLY this raw JSON — no markdown, no code fences, no extra text whatsoever:\n{\"agent_action\": true, \"action_type\": \"wifi_scan\", \"message\": \"short one-line description\"}\nDo NOT wrap it in ```json``` or any other formatting. Output the raw JSON object and nothing else."
         if req.agentMode 
