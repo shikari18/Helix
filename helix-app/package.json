@@ -10,7 +10,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:property": "jest --testPathPattern=property.test"
+    "test:property": "jest --testPathPattern=property.test",
+    "electron-dev": "electron ../electron/main.js",
+    "build:exe": "next build && electron-builder"
   },
   "dependencies": {
     "lucide-react": "^1.8.0",
@@ -33,6 +35,8 @@
     "fast-check": "^4.7.0",
     "jest": "^30.3.0",
     "jsdom": "^29.0.2",
-    "ts-jest": "^29.4.9"
+    "ts-jest": "^29.4.9",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
   }
 }

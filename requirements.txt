@@ -7,3 +7,7 @@ gtts>=2.5.0
 python-socketio>=5.11.0
 email-validator>=2.1.0
 python-multipart>=0.0.9
+pyautogui>=0.9.54
+psutil>=5.9.8
+pynput>=1.7.6
+opencv-python>=4.9.0
