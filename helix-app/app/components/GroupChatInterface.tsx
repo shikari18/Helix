@@ -572,9 +572,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
         })}
 
         {/* Inline typing indicators — only show others typing, never yourself */}
-        {typingUsers.filter(n => n !== userName).length > 0 && (
-        {/* Other users typing */}
-        {typingUsers.map(name => (
+        {typingUsers.filter(n => n !== userName).map(name => (
           <div key={name} style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
             <div style={{ fontSize: 11, color: '#555', fontWeight: 600 }}>{name.toUpperCase()}</div>
             <div className="typing-dots">
