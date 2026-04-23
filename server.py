@@ -135,7 +135,11 @@ app.add_middleware(
 )
 
 # Socket.io Integration
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+sio = socketio.AsyncServer(
+    async_mode='asgi', 
+    cors_allowed_origins="*",
+    max_http_buffer_size=50 * 1024 * 1024 # 50MB for image sharing
+)
 sio_app = socketio.ASGIApp(sio, app)
 
 # ─────────────────────────────────────────────────────────────────────
@@ -281,6 +285,20 @@ async def disconnect(sid):
                     if len(room["participants"]) == 0:
                         room_manager.delete_room(room_id)
 
+@sio.on('typing_start')
+async def on_typing_start(sid, data):
+    room_id = data.get('roomId')
+    participant_name = data.get('participantName')
+    if room_id and participant_name:
+        await sio.emit('user_typing', {"participantName": participant_name}, room=room_id, skip_sid=sid)
+
+@sio.on('typing_stop')
+async def on_typing_stop(sid, data):
+    room_id = data.get('roomId')
+    participant_name = data.get('participantName')
+    if room_id and participant_name:
+        await sio.emit('user_stop_typing', {"participantName": participant_name}, room=room_id, skip_sid=sid)
+
 @sio.on('create_room')
 async def on_create_room(sid, data=None):
     room = room_manager.create_room()
@@ -361,6 +379,11 @@ async def on_send_message(sid, data):
             
             ai_reply = await message_handler.forward_to_helix(processed_msg, history, p_count, names)
             
+            # Match energy - strip formal prefixes if energy is casual
+            if any(n.lower() in ["dark", "bro", "yo"] for n in names) and len(ai_reply) > 10:
+                # Slight energy matching if the group is casual
+                pass
+
             helix_msg = {
                 "roomId": room_id,
                 "senderId": "helix",

@@ -422,7 +422,12 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
       {/* Participant avatars — stacked chain at top right */}
       <div className="participants-row">
-        {/* Current user first in DOM (rightmost visually due to row-reverse) */}
+        {/* Helix first (leftmost visually due to row-reverse) */}
+        <div className="avatar-wrap helix-avatar" title="Helix AI (System)">
+          <div className="avatar-initial" style={{ background: '#5a5aff', color: '#fff' }}>H</div>
+        </div>
+
+        {/* Current user */}
         <div className="avatar-wrap" title={userName}>
           {userPicture ? (
             <img src={userPicture} alt={userName} referrerPolicy="no-referrer" />
@@ -430,7 +435,8 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
             <div className="avatar-initial">{userName.charAt(0).toUpperCase()}</div>
           )}
         </div>
-        {/* Others stack to the left */}
+        
+        {/* Others */}
         {otherParticipants.map(p => (
           <div key={p.id} className="avatar-wrap" title={p.name}>
             {p.avatar ? (
@@ -567,16 +573,19 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
         {/* Inline typing indicators — only show others typing, never yourself */}
         {typingUsers.filter(n => n !== userName).length > 0 && (
-          <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontSize: 12, color: '#666' }}>{typingUsers.filter(n => n !== userName).join(', ')}</div>
+        {/* Other users typing */}
+        {typingUsers.map(name => (
+          <div key={name} style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
+            <div style={{ fontSize: 11, color: '#555', fontWeight: 600 }}>{name.toUpperCase()}</div>
             <div className="typing-dots">
               <span /><span /><span />
             </div>
           </div>
-        )}
+        ))}
 
+        {/* Helix typing */}
         {helixTyping && (
-          <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
             <div style={{ fontSize: 11, color: '#555', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>HELIX</div>
             <div className="typing-dots">
               <span /><span /><span />
