@@ -7,8 +7,8 @@ class RoomManager:
         # In-memory storage for rooms
         # roomId -> { id, createdAt, participants: { id -> data }, messages: [], lastActivity }
         self.rooms: Dict[str, dict] = {}
-        from pathlib import Path
-        self.rooms_file = Path(__file__).parent.parent / "rooms.json"
+        # Persistence path - in project root
+        self.rooms_file = Path("rooms.json")
         self.load_rooms()
 
     def load_rooms(self):
