@@ -496,6 +496,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
           if (isOwn) {
             return (
+              <div key={msg.id} style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
                 {(msg as any).images?.length > 0 && (
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 8 }}>
                     {(msg as any).images.map((src: string, i: number) => (
