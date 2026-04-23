@@ -100,6 +100,8 @@ export default function ChatApp() {
   const [isGroupChat, setIsGroupChat] = useState(false)
   const [groupChatRoomId, setGroupChatRoomId] = useState<string | null>(null)
   const [groupChatName, setGroupChatName] = useState('New group chat')
+  const [showGroupActionModal, setShowGroupActionModal] = useState(false)
+  const [joinRoomCode, setJoinRoomCode] = useState('')
 
   // Persist group chat state — restore on refresh
   useEffect(() => {
@@ -972,16 +974,16 @@ export default function ChatApp() {
         })
         socket.on('connect_error', () => {
           socket.disconnect()
-          // Fallback to local ID if server unreachable
-          resolve(Date.now().toString(36) + Math.random().toString(36).substring(2, 8))
+          // Fallback to local 6-digit ID if server unreachable
+          resolve(Math.floor(100000 + Math.random() * 900000).toString())
         })
         setTimeout(() => {
           socket.disconnect()
-          resolve(Date.now().toString(36) + Math.random().toString(36).substring(2, 8))
+          resolve(Math.floor(100000 + Math.random() * 900000).toString())
         }, 3000)
       })
     } catch {
-      roomId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8)
+      roomId = Math.floor(100000 + Math.random() * 900000).toString()
     }
 
     setIsGroupChat(true)
@@ -1061,7 +1063,7 @@ export default function ChatApp() {
           onSelectChat={(id) => handleSelectChat(id)}
           onLogout={handleLogout}
           onShareChat={() => setShareModalOpen(true)}
-          onStartGroupChat={startGroupChat}
+          onOpenGroupMenu={() => setShowGroupActionModal(true)}
           isMobile={isMobile}
           plan={plan || 'free'}
         />
@@ -1438,6 +1440,82 @@ export default function ChatApp() {
           />
         </div>
       )}
+      {/* Group Action Modal — centered on screen */}
+      {showGroupActionModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{
+            width: '90%', maxWidth: 400, background: '#1a1a1a', border: '1px solid #333',
+            borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 24,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)', position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowGroupActionModal(false)}
+              style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#666', fontSize: 24, cursor: 'pointer' }}
+            >×</button>
+
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontSize: 24, color: '#fff', marginBottom: 8 }}>Group Collaboration</h2>
+              <p style={{ fontSize: 14, color: '#888' }}>Create a new secure room or join an existing one.</p>
+            </div>
+
+            {/* Join Room (Top) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input 
+                type="text" 
+                placeholder="6-digit Room Code"
+                maxLength={6}
+                value={joinRoomCode}
+                onChange={e => setJoinRoomCode(e.target.value.replace(/\D/g, ''))}
+                style={{
+                  width: '100%', height: 50, background: '#0f0f0f', border: '1px solid #333',
+                  borderRadius: 12, padding: '0 16px', color: '#fff', fontSize: 16, textAlign: 'center', letterSpacing: '2px'
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (joinRoomCode.length === 6) {
+                    joinGroupChat(joinRoomCode)
+                    setShowGroupActionModal(false)
+                    setJoinRoomCode('')
+                  } else {
+                    setToast({ msg: 'Please enter a valid 6-digit code', type: 'error' })
+                  }
+                }}
+                style={{
+                  width: '100%', height: 50, background: '#fff', color: '#000', fontWeight: 600,
+                  borderRadius: 12, border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >Join Room</button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: '#333' }} />
+              <span style={{ fontSize: 12, color: '#444' }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: '#333' }} />
+            </div>
+
+            {/* Create Room (Bottom) */}
+            <button
+              onClick={() => {
+                startGroupChat()
+                setShowGroupActionModal(false)
+              }}
+              style={{
+                width: '100%', height: 50, background: 'transparent', border: '1px solid #333',
+                color: '#fff', fontWeight: 600, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s'
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = '#222')}
+              onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+            >Create Room</button>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toast && (
         <div style={{
