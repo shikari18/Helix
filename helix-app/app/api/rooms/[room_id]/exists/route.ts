@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { room_id: string } }
+  { params }: { params: Promise<{ room_id: string }> }
 ) {
   try {
-    const roomId = params.room_id
+    const { room_id } = await params
+    const roomId = room_id
     let backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000'
     const url = `${backendUrl.startsWith('http') ? backendUrl : `https://${backendUrl}`}/api/rooms/${roomId}/exists`
     
