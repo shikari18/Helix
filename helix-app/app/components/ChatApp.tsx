@@ -967,10 +967,15 @@ export default function ChatApp() {
     try {
       const { io } = await import('socket.io-client')
       const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168') || window.location.hostname.startsWith('172.'))
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
-        (isLocalhost
+      let wsUrl = process.env.NEXT_PUBLIC_WS_URL || ''
+      
+      if (!wsUrl) {
+         wsUrl = isLocalhost
           ? `http://${window.location.hostname}:8000`
-          : `https://${window.location.hostname}`)
+          : `https://${window.location.hostname}`
+      } else if (!wsUrl.startsWith('http') && !wsUrl.startsWith('//')) {
+         wsUrl = `https://${wsUrl}`
+      }
       const socket = io(wsUrl, { transports: ['websocket', 'polling'] })
       
       roomId = await new Promise<string>((resolve, reject) => {
@@ -982,16 +987,16 @@ export default function ChatApp() {
         })
         socket.on('connect_error', () => {
           socket.disconnect()
-          // Fallback to local 6-digit ID if server unreachable
-          resolve(Math.floor(100000 + Math.random() * 900000).toString())
+          reject(new Error('Server unreachable'))
         })
         setTimeout(() => {
           socket.disconnect()
-          resolve(Math.floor(100000 + Math.random() * 900000).toString())
-        }, 3000)
+          reject(new Error('Connection timed out'))
+        }, 5000)
       })
-    } catch {
-      roomId = Math.floor(100000 + Math.random() * 900000).toString()
+    } catch (err) {
+      setToast({ msg: 'Group chat server is unreachable. Please try again later.', type: 'error' })
+      return
     }
 
     setIsGroupChat(true)
