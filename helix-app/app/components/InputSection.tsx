@@ -286,7 +286,9 @@ export default function InputSection({
           <p>Agent Mode requires a <strong>Pro+</strong> or <strong>Ultra</strong> subscription. Elite autonomous workflows are not available on your current plan.</p>
           <a href="/pricing" className="upgrade-attach-btn" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>See pricing</a>
         </div>
-         {/* Get Agent Mode Popup */}
+      )}
+
+      {/* Get Agent Mode Popup */}
       {showGetAgentPopup && (
         <div className="upgrade-attach-popup active agent-get-popup" style={{ left: 20, bottom: 80, width: 340, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
