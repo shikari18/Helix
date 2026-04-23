@@ -116,7 +116,7 @@ export default function InputSection({
   const handleModeChange = (mode: ChatMode) => {
     if (mode === 'agent') {
       if (isMobile) {
-        alert("Agent Mode is a high-resource feature currently only available on the Helix Desktop App. Please switch to a PC to use it.")
+        onToast?.("Agent Mode is a high-resource feature currently only available on the Helix Desktop App. Please switch to a PC to use it.", 'warn')
         setModeDropdownOpen(false)
         return
       }
@@ -286,9 +286,7 @@ export default function InputSection({
           <p>Agent Mode requires a <strong>Pro+</strong> or <strong>Ultra</strong> subscription. Elite autonomous workflows are not available on your current plan.</p>
           <a href="/pricing" className="upgrade-attach-btn" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>See pricing</a>
         </div>
-      )}
-
-      {/* Get Agent Mode Popup (The user's screenshot version) */}
+         {/* Get Agent Mode Popup */}
       {showGetAgentPopup && (
         <div className="upgrade-attach-popup active agent-get-popup" style={{ left: 20, bottom: 80, width: 340, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -305,32 +303,6 @@ export default function InputSection({
               <div className="agent-option-text">
                 <div className="agent-option-title">Desktop App</div>
                 <div className="agent-option-desc">Download and run locally</div>
-              </div>
-            </div>
-
-            <div className="agent-option-card" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-              <div className="agent-option-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              </div>
-              <div className="agent-option-text">
-                <div className="agent-option-title">Remote Machine</div>
-                <div className="agent-option-desc">Connect via the CLI package</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
-                <div style={{ flex: 1, height: 1, background: '#1a1a1a' }} />
-                <span style={{ fontSize: 11, color: '#333', fontWeight: 600 }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: '#1a1a1a' }} />
-            </div>
-
-            <div className="agent-option-card" onClick={() => { setShowGetAgentPopup(false); onChatModeChange('agent') }}>
-              <div className="agent-option-icon" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19c.7 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25z"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-              </div>
-              <div className="agent-option-text">
-                <div className="agent-option-title">Cloud Agent</div>
-                <div className="agent-option-desc">Isolated cloud environment</div>
               </div>
             </div>
           </div>

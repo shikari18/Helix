@@ -68,6 +68,7 @@ function randomGreeting() {
 }
 
 export default function ChatApp() {
+  const [toast, setToast] = useState<{ msg: string; type: 'info' | 'warn' | 'error' } | null>(null)
   const [loggedIn, setLoggedIn] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isGhostMode, setIsGhostMode] = useState(false)
@@ -165,19 +166,29 @@ export default function ChatApp() {
     }
   }, [])
 
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3500)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
   const [plan, setPlan] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('helix_plan') || 'free'
-    return 'free'
+    if (typeof window !== 'undefined') return localStorage.getItem('helix_plan') || null
+    return null
   })
 
   // Re-sync plan if localStorage changes (e.g. from pricing page)
   useEffect(() => {
+    if (loggedIn && !plan && typeof window !== 'undefined' && !window.location.pathname.includes('/pricing')) {
+        window.location.href = '/pricing'
+    }
       const interval = setInterval(() => {
-          const current = localStorage.getItem('helix_plan') || 'free'
-          if (current !== plan) setPlan(current)
+          const current = localStorage.getItem('helix_plan')
+          if (current !== plan) setPlan(current as any)
       }, 1000)
       return () => clearInterval(interval)
-  }, [plan])
+  }, [plan, loggedIn])
   const [pageTitle, setPageTitle] = useState(() => {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('helix_user_email') || 'guest'
@@ -667,9 +678,10 @@ export default function ChatApp() {
   }, [messages, scrollDuringTyping])
 
   // Hacking-vibe fallback titles for casual greetings
-  const CASUAL_TITLES = [    'Just Vibing', 'Quick Chat', 'Hey Session', 'Casual Drop-in',
-    'Just Checking In', 'Random Chat', 'Chill Session', 'Quick Hello',
-    'Just Saying Hey', 'Friendly Check-in', 'Low-key Chat', 'Just Hanging',
+  const CASUAL_TITLES = [
+    'Casual Greeting', 'Quick Chat', 'Hey Session', 'Casual Drop-in',
+    'Just Checking In', 'Random Chat', 'Greetings', 'Quick Hello',
+    'Just Saying Hey', 'Friendly Check-in', 'Low-key Chat', 'Casual Vibe',
   ]
 
   const generateChatTitle = useCallback(async (firstMessage: string, chatId: string) => {
@@ -1100,7 +1112,8 @@ export default function ChatApp() {
                   isGhostMode={isGhostMode}
                   onStartGroupChat={startGroupChat}
                   isMobile={isMobile}
-                  plan={plan}
+                  plan={plan || 'free'}
+                  onToast={(msg, type) => setToast({ msg, type: type || 'info' })}
                 />
               </div>
             </div>
@@ -1134,7 +1147,8 @@ export default function ChatApp() {
                   isGhostMode={isGhostMode}
                   onStartGroupChat={startGroupChat}
                   isMobile={isMobile}
-                  plan={plan}
+                  plan={plan || 'free'}
+                  onToast={(msg, type) => setToast({ msg, type: type || 'info' })}
                 />
               </div>
             </div>
@@ -1246,7 +1260,8 @@ export default function ChatApp() {
                     onAgentDismiss={() => setAgentPrompt(null)}
                     onStartGroupChat={startGroupChat}
                     isMobile={isMobile}
-                    plan={plan}
+                    plan={plan || 'free'}
+                    onToast={(msg, type) => setToast({ msg, type: type || 'info' })}
                   />
                 </div>
               </div>
@@ -1392,6 +1407,18 @@ export default function ChatApp() {
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             title="Link preview"
           />
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#1a1a1a', border: '1px solid #333', borderRadius: 12,
+          padding: '12px 20px', zIndex: 10000, display: 'flex', alignItems: 'center', gap: 12,
+          boxShadow: '0 10px 40px rgba(0,0,0,0.5)', animation: 'slideDown 0.3s ease'
+        }}>
+          {toast.type === 'error' && <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff4d4d"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>}
+          <span style={{ color: '#eee', fontSize: 14 }}>{toast.msg}</span>
         </div>
       )}
     </div>

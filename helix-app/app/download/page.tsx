@@ -14,9 +14,9 @@ export default function DownloadPage() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif', padding: '0 20px' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif', padding: '0 20px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <style>{`
-        body { background: #0a0a0a !important; margin: 0; }
+        body { background: #0a0a0a !important; margin: 0; overflow-y: auto !important; height: auto !important; }
         .download-btn:hover { background: #e0e0e0 !important; transform: scale(1.02); }
         .platform-item:hover { background: #161616 !important; border-color: #333 !important; }
         .back-link:hover { color: #fff !important; }
