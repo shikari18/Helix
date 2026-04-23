@@ -1001,6 +1001,33 @@ export default function ChatApp() {
     setChatList(prev => [newGroupChat, ...prev])
   }, [])
   
+  const joinGroupChat = useCallback(async (roomId: string) => {
+    setIsGroupChat(true)
+    setGroupChatRoomId(roomId)
+    setGroupChatName(`Group ${roomId}`)
+    setChatActive(false)
+    setMessages([])
+    setCurrentChatId(null)
+    
+    // Add to sidebar if not present
+    const newGroup: ChatItem = {
+      id: roomId,
+      title: `Group ${roomId}`,
+      pinned: false,
+      timestamp: Date.now(),
+      isGroup: true,
+    }
+    setChatList(prev => {
+      if (prev.find(c => c.id === roomId)) return prev
+      return [newGroup, ...prev]
+    })
+  }, [])
+
+  // Expose to window for Sidebar
+  useEffect(() => {
+    (window as any).joinGroup = joinGroupChat
+  }, [joinGroupChat])
+
   const handleGroupChatNameChange = useCallback((newName: string) => {
     setGroupChatName(newName)
     // Update in chat list

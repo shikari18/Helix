@@ -370,9 +370,9 @@ async def on_send_message(sid, data):
     room = room_manager.get_room(room_id)
     p_count = len(room["participants"])
     
-    # Proactive response: 1on1, explicit mention, or 25% chance in group active talk
+    # Proactive response: 1on1, explicit mention, or 49% chance in group active talk
     mention = message_handler.detect_helix_mention(processed_msg["content"])
-    should_respond = p_count == 1 or mention or (random.random() < 0.25 and len(processed_msg["content"]) > 3)
+    should_respond = p_count == 1 or mention or (random.random() < 0.49 and len(processed_msg["content"]) > 3)
 
     if should_respond:
         try:

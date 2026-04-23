@@ -9,9 +9,11 @@ class RoomManager:
         self.rooms: Dict[str, dict] = {}
 
     def create_room(self) -> dict:
-        """Create a new room with a unique ID."""
-        room_id = str(uuid.uuid4()).split('-')[0] + str(int(time.time()))[-5:]
-        room_id = room_id[:13] # 13-character unique ID
+        """Create a new room with a unique 6-digit ID."""
+        import random
+        room_id = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        while room_id in self.rooms:
+            room_id = "".join([str(random.randint(0, 9)) for _ in range(6)])
         
         room = {
             "id": room_id,

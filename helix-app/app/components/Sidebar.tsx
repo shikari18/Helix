@@ -224,31 +224,53 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           </div>
         )}
 
-        {/* Group Chat */}
-        <button
-          onClick={() => {
-            if (groupChats.length >= 4) {
-              alert("You can only have up to 4 group chats. Please delete an existing one to create or join another.")
-              return
-            }
-            onStartGroupChat?.()
-            onClose()
-          }}
-          style={{
-            margin: '0 16px 8px', padding: '10px 14px', borderRadius: 10,
-            border: 'none', background: 'transparent', cursor: 'pointer',
+        {/* Group Chat Section */}
+        <div style={{ margin: '0 16px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ 
+            padding: '10px 14px', borderRadius: 10,
             display: 'flex', alignItems: 'center', gap: 12,
-            fontSize: 14, fontWeight: 500, color: '#b0b0b0', fontFamily: 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#2d2d2d'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
-          onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#b0b0b0' }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          Group Chat
-        </button>
+            fontSize: 14, fontWeight: 500, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px'
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Group Chats
+          </div>
+          
+          <div style={{ display: 'flex', gap: 8, padding: '0 4px' }}>
+            <button
+              onClick={() => {
+                if (groupChats.length >= 4) {
+                  alert("List is full. Delete a group to create more.")
+                  return
+                }
+                onStartGroupChat?.()
+                onClose()
+              }}
+              className="group-action-btn"
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', 
+                color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit'
+              }}
+            >Create</button>
+            <button
+              onClick={() => {
+                const code = prompt("Enter 6-digit group code:")
+                if (code && code.length === 6) {
+                  (window as any).joinGroup?.(code)
+                  onClose()
+                } else if (code) {
+                  alert("Invalid code format.")
+                }
+              }}
+              className="group-action-btn"
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', 
+                color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit'
+              }}
+            >Join</button>
+          </div>
+        </div>
 
         {/* Practice */}
         <button

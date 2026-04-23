@@ -382,15 +382,11 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   return (
     <div className="group-chat-container">
 
-      {/* Copy invite link — top center */}
-      {inviteLink && (
-        <button className="copy-link-top" onClick={() => { navigator.clipboard.writeText(inviteLink); setCopied(true); setTimeout(() => setCopied(false), 2000) }} title="Copy invite link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          {copied ? 'Copied!' : 'Copy invite link'}
-        </button>
-      )}
+      {/* Room ID Display — top center */}
+      <div className="room-id-header">
+        <span style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Room ID</span>
+        <div style={{ fontSize: 13, color: '#fff', fontWeight: 600, fontFamily: 'monospace' }}>{roomId}</div>
+      </div>
 
       {/* Leave button — red door icon at top left */}
       <button className="leave-btn" onClick={handleLeave} title="Leave chat">
@@ -470,11 +466,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
       >
         {messages.length === 0 && (
           <div className="empty-state">
-            <div style={{ background: '#1a1a1a', border: '1px solid #2d2d2d', padding: '16px 24px', borderRadius: 16, maxWidth: 320 }}>
-              <p className="empty-creator" style={{ marginBottom: 8 }}>{userName} created the group</p>
-              <p className="empty-note">Helix is connected but will not use personal memory in groups.</p>
-              <button onClick={() => setShowInvitePopup(true)} className="invite-btn" style={{ marginTop: 12 }}>Copy Invite Link</button>
-            </div>
+            <div style={{ color: '#444', fontSize: 13 }}>Conversation initiated. Welcome to {roomId}.</div>
           </div>
         )}
 
@@ -765,6 +757,19 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
         }
 
         /* Connection Status */
+        .room-id-header {
+          position: absolute;
+          top: 14px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          z-index: 100;
+          pointer-events: none;
+        }
+
         .connection-status {
           position: fixed;
           top: 20px;
