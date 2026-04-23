@@ -25,6 +25,8 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    // Open DevTools by default for diagnostics until we fix the black screen
+    mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', () => {

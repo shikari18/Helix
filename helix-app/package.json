@@ -18,7 +18,8 @@
   "build": {
     "appId": "com.helix.app",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "directories": {
       "output": "dist"

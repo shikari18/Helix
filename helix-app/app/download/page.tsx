@@ -60,7 +60,10 @@ export default function DownloadPage() {
         }}>
           <svg width="64" height="64" viewBox="0 0 24 24" fill="#fff"><path d="M3 5.544l7.007-.959v6.526H3V5.544zm7.007 6.551v6.526L3 17.662v-5.567h7.007zm1.085-6.7l9.908-1.395v8.095h-9.908V5.395zm9.908 7.689l-9.908.011v8.118l9.908-1.385v-6.744z"/></svg>
           
-          <a href="/Helix-Setup.exe" download className="download-btn" style={{
+          <a 
+            href="https://github.com/shikari18/Helix/releases/download/v1.0.0/helix-app.Setup.0.1.0.exe" 
+            className="download-btn"
+            style={{
             background: '#fff',
             color: '#000',
             padding: '14px 40px',
