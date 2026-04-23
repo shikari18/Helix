@@ -22,3 +22,7 @@ server_err.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# Desktop Builds
+dist/
+helix-app/dist/

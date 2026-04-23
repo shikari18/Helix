@@ -2,6 +2,7 @@
   "name": "helix-app",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
@@ -11,8 +12,21 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:property": "jest --testPathPattern=property.test",
-    "electron-dev": "electron ../electron/main.js",
+    "electron-dev": "electron .",
     "build:exe": "next build && electron-builder"
+  },
+  "build": {
+    "appId": "com.helix.app",
+    "win": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ]
   },
   "dependencies": {
     "lucide-react": "^1.8.0",

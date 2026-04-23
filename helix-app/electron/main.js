@@ -35,7 +35,7 @@ function createWindow() {
 // Start Python sidecar
 function startPythonSidecar() {
   const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
-  const scriptPath = path.join(__dirname, '..', 'server.py');
+  const scriptPath = path.join(__dirname, '..', '..', 'server.py');
   
   console.log(`[Desktop] Starting Python sidecar: ${pythonPath} ${scriptPath}`);
   

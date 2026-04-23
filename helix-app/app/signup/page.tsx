@@ -188,7 +188,7 @@ export default function SignupPage() {
 
   const NAV_LINKS = [
     { label: 'Pricing', href: '/pricing' },
-    { label: 'Download', href: '/download' },
+    { label: 'Learn More', href: '/learn' },
     { label: 'Terms of Service', href: '/terms-of-service' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
   ]
