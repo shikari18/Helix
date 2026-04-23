@@ -370,9 +370,9 @@ async def on_send_message(sid, data):
     room = room_manager.get_room(room_id)
     p_count = len(room["participants"])
     
-    # Proactive response: 1on1, explicit mention, or 49% chance in group active talk
+    # Proactive response: 1on1, explicit mention, or 88% chance in group active talk
     mention = message_handler.detect_helix_mention(processed_msg["content"])
-    should_respond = p_count == 1 or mention or (random.random() < 0.49 and len(processed_msg["content"]) > 3)
+    should_respond = p_count == 1 or mention or (random.random() < 0.88 and len(processed_msg["content"]) > 3)
 
     if should_respond:
         try:
@@ -442,7 +442,8 @@ async def api_chat(req: ChatRequest):
             f"\n\n## GROUP CHAT MODE\n"
             f"You are in a group chat with {req.participantCount} participant{part_str}: {name_list}. "
             "Address people by their names. Match the group's energy—if they joke, joke back. "
-            "Keep responses SNAPPY and SHORT. Use emojis. If someone is wrong, point it out jokingly (e.g. 'no no 😭 thats not right shikari...'). "
+            "Keep responses SNAPPY and SHORT. Match the emoji density of the group strictly—if others don't use emojis, you MUST NOT use them either. "
+            "Only use emojis if the group is actively using them. If someone is wrong, point it out jokingly. "
             "You are a member of the conversation, not just a tool."
         )
     agent_context = (

@@ -11,9 +11,11 @@ class RoomManager:
     def create_room(self) -> dict:
         """Create a new room with a unique 6-digit ID."""
         import random
-        room_id = "".join([str(random.randint(0, 9)) for _ in range(6)])
-        while room_id in self.rooms:
-            room_id = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        def gen(): return "".join([str(random.randint(0, 9)) for _ in range(6)])
+        room_id = gen()
+        # Avoid collisions and patterns like 111111
+        while room_id in self.rooms or len(set(room_id)) == 1:
+            room_id = gen()
         
         room = {
             "id": room_id,
