@@ -514,21 +514,32 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
           }
 
           return (
-            <div key={msg.id} style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div key={msg.id} style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start', width: '100%' }}>
               {isHelix ? (
                 <div style={{ fontSize: 11, color: '#555', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>HELIX</div>
               ) : (
                 <div style={{ fontSize: 12, color: '#666' }}>{msg.senderName}</div>
               )}
               {(msg as any).images?.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
                   {(msg as any).images.map((src: string, i: number) => (
-                    <img key={i} src={src} alt="" style={{ maxWidth: 200, maxHeight: 200, borderRadius: 12, objectFit: 'cover', border: '1px solid #3d3d3d' }} />
+                    <img key={i} src={src} alt="" style={{ maxWidth: 'min(300px, 80%)', borderRadius: 14, objectFit: 'cover', border: '1px solid #333' }} />
                   ))}
                 </div>
               )}
               {msg.content && msg.content !== '📷 Image' && (
-                <div style={{ fontSize: isHelix ? 18 : 17, lineHeight: 1.7, color: '#fff' }}>
+                <div style={{
+                  background: isHelix ? 'transparent' : '#1a1a1a',
+                  padding: isHelix ? '0' : '10px 16px',
+                  borderRadius: '18px 18px 18px 4px',
+                  border: isHelix ? 'none' : '1px solid #2d2d2d',
+                  maxWidth: '85%',
+                  fontSize: isHelix ? 18 : 16,
+                  lineHeight: 1.6,
+                  color: '#fff',
+                  wordBreak: 'break-word',
+                  minWidth: 'fit-content'
+                }}>
                   {isHelix ? (
                     (() => {
                       const parts = parseCodeBlocks(msg.content)

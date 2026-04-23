@@ -460,34 +460,34 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
               <div onClick={() => setDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
               <div style={{
                 position: 'fixed',
-                bottom: isMobile ? '80px' : '20px',
-                left: isMobile ? '12px' : '272px', // sidebar width (260) + gap (12)
-                width: isMobile ? 'calc(100% - 24px)' : '220px',
-                background: '#1a1a1a',
+                bottom: isMobile ? '70px' : '20px',
+                left: isMobile ? '10px' : '272px',
+                width: isMobile ? 'calc(100% - 20px)' : '210px',
+                background: '#161616',
                 border: '1px solid #2d2d2d',
                 borderRadius: 14,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.7)',
                 zIndex: 300,
                 overflow: 'hidden',
-                animation: 'slideUp 0.2s ease',
+                animation: 'slideUp 0.15s ease-out',
               }}>
                 <style>{`
-                  .menu-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: #b0b0b0; display: flex; alignItems: center; gap: 10px; transition: all 0.2s; }
-                  .menu-item:hover { background: #242424; color: #fff; }
+                  .menu-item { padding: 9px 12px; cursor: pointer; font-size: 13px; color: #999; display: flex; alignItems: center; gap: 8px; transition: all 0.15s; }
+                  .menu-item:hover { background: #222; color: #fff; }
                 `}</style>
 
                 {/* Plans Management */}
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid #2d2d2d', background: '#1c1c1c' }}>
-                   <div style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>Current Plan</div>
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid #282828', background: '#1a1a1a' }}>
+                   <div style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 2 }}>Current Plan</div>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{getPlanName()}</span>
-                      <Link href="/pricing" onClick={() => setDropdownOpen(false)} style={{ fontSize: 11, color: '#5a5aff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</Link>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{getPlanName()}</span>
+                      <Link href="/pricing" onClick={() => setDropdownOpen(false)} style={{ fontSize: 10, color: '#5a5aff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</Link>
                    </div>
                    <div 
                       onClick={() => { setDropdownOpen(false); window.open('/cancel-plan', '_blank') }}
-                      style={{ fontSize: 11, color: '#444', marginTop: 8, cursor: 'pointer', transition: 'color 0.2s' }}
-                      onMouseOver={e => e.currentTarget.style.color = '#777'}
-                      onMouseOut={e => e.currentTarget.style.color = '#444'}
+                      style={{ fontSize: 10, color: '#333', marginTop: 6, cursor: 'pointer', transition: 'color 0.2s' }}
+                      onMouseOver={e => e.currentTarget.style.color = '#666'}
+                      onMouseOut={e => e.currentTarget.style.color = '#333'}
                    >
                      Cancel plan
                    </div>
