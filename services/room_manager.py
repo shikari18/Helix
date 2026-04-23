@@ -7,6 +7,38 @@ class RoomManager:
         # In-memory storage for rooms
         # roomId -> { id, createdAt, participants: { id -> data }, messages: [], lastActivity }
         self.rooms: Dict[str, dict] = {}
+        from pathlib import Path
+        self.rooms_file = Path(__file__).parent.parent / "rooms.json"
+        self.load_rooms()
+
+    def load_rooms(self):
+        import json
+        try:
+            if self.rooms_file.exists():
+                with open(self.rooms_file, "r", encoding="utf-8") as f:
+                    self.rooms = json.load(f)
+                print(f"[RoomManager] Loaded {len(self.rooms)} rooms from disk")
+        except Exception as e:
+            print(f"[RoomManager] Error loading rooms: {e}")
+
+    def save_rooms(self):
+        import json
+        try:
+            # We don't save ephemeral 'isOnline' status as True on disk
+            rooms_to_save = {}
+            for rid, room in self.rooms.items():
+                save_room = room.copy()
+                # Ensure we don't mutate the in-memory participants dict
+                save_room["participants"] = {
+                    pid: {**p, "isOnline": False} 
+                    for pid, p in room["participants"].items()
+                }
+                rooms_to_save[rid] = save_room
+            
+            with open(self.rooms_file, "w", encoding="utf-8") as f:
+                json.dump(rooms_to_save, f, indent=2)
+        except Exception as e:
+             print(f"[RoomManager] Error saving rooms: {e}")
 
     def create_room(self) -> dict:
         """Create a new room with a unique 6-digit ID."""
@@ -26,6 +58,7 @@ class RoomManager:
         }
         
         self.rooms[room_id] = room
+        self.save_rooms()
         print(f"[RoomManager] Room created: {room_id}")
         
         return room
@@ -51,6 +84,7 @@ class RoomManager:
         room["participants"][participant_id] = participant_data
         room["lastActivity"] = int(time.time() * 1000)
         
+        self.save_rooms()
         print(f"[RoomManager] Participant {participant_id} added to room {room_id}")
         
         return participant_data
@@ -64,6 +98,7 @@ class RoomManager:
         if participant_id in room["participants"]:
             del room["participants"][participant_id]
             room["lastActivity"] = int(time.time() * 1000)
+            self.save_rooms()
             print(f"[RoomManager] Participant {participant_id} removed from room {room_id}")
             return True
         
@@ -119,6 +154,7 @@ class RoomManager:
         if len(room["messages"]) > 500:
             room["messages"] = room["messages"][-500:]
 
+        self.save_rooms()
         print(f"[RoomManager] Message added to room {room_id}")
         
         return message_data
@@ -131,6 +167,7 @@ class RoomManager:
         """Delete room."""
         if room_id in self.rooms:
             del self.rooms[room_id]
+            self.save_rooms()
             print(f"[RoomManager] Room {room_id} deleted")
             return True
         return False

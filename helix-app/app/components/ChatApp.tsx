@@ -917,9 +917,15 @@ export default function ChatApp() {
         setPageTitle('Helix')
         localStorage.removeItem(getStorageKeys().messages)
       }
+      // If current group chat removed, reset group state
+      if (groupChatRoomId && !next.find(c => c.id === groupChatRoomId)) {
+        setIsGroupChat(false)
+        setGroupChatRoomId(null)
+        setMessages([])
+      }
       return next
     })
-  }, [currentChatId])
+  }, [currentChatId, groupChatRoomId])
 
   const [loggingOut, setLoggingOut] = useState(false)
 

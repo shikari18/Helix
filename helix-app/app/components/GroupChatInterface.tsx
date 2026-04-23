@@ -83,6 +83,8 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
   useEffect(() => {
     const initializeConnection = async () => {
       try {
+        setError(null)
+        setConnectionState('reconnecting')
         let wsUrl = process.env.NEXT_PUBLIC_WS_URL || ''
         
         // Dynamically fetch from our proxy config just in case static env substitution failed
@@ -121,34 +123,7 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
           } else {
             setTypingUsers(prev => prev.filter(n => n !== message.senderName))
           }
-          if (
-            typeof window !== 'undefined' &&
-            'Notification' in window &&
-            Notification.permission === 'granted' &&
-            document.hidden &&
-            message.senderId !== currentUserId && message.senderName !== userName
-          ) {
-            const senderLabel = message.isHelixResponse ? 'HELIX' : message.senderName
-            new Notification(`${senderLabel} in group chat`, {
-              body: message.content.length > 80 ? message.content.slice(0, 80) + '…' : message.content,
-              icon: '/logo.png',
-              tag: `group-${roomId}`,
-            })
-          }
         })
-
-        wsClient.onUserTyping((name, isTyping) => {
-          if (isTyping) {
-            setTypingUsers(prev => prev.includes(name) ? prev : [...prev, name])
-          } else {
-            setTypingUsers(prev => prev.filter(n => n !== name))
-          }
-        })
-
-        wsClient.onHelixTyping((isTyping) => {
-          setHelixTyping(isTyping)
-        })
-
 
         wsClient.onParticipantJoin((participant) => {
           setParticipants(prev => {
@@ -204,13 +179,17 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
           setParticipants(result.participants || [])
           setInviteLink(`${window.location.origin}/group/${roomId}`)
           setError(null)
+          setConnectionState('connected')
         } else if (result.error === 'Room not found') {
           setError('room_expired')
+          setConnectionState('disconnected')
         } else {
           setError(result.error || 'Failed to connect to room')
+          setConnectionState('disconnected')
         }
       } catch (err) {
         setError('Failed to connect to server')
+        setConnectionState('disconnected')
       }
     }
 
@@ -357,13 +336,13 @@ export default function GroupChatInterface({ roomId, onBack }: Props) {
 
   if (error && (error.includes('Room not found') || error === 'room_expired')) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#141414', flexDirection: 'column', gap: 16, fontFamily: 'inherit' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#141414', flexDirection: 'column', gap: 16, fontFamily: 'inherit', textAlign: 'center', padding: 20 }}>
         <div style={{ fontSize: 32 }}>💬</div>
         <h2 style={{ color: '#fff', margin: 0, fontSize: 18 }}>Group chat expired</h2>
-        <p style={{ color: '#888', margin: 0, fontSize: 14, textAlign: 'center', maxWidth: 280 }}>This room no longer exists. The server may have restarted.</p>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <p style={{ color: '#888', margin: 0, fontSize: 14, maxWidth: 280, lineHeight: 1.6 }}>This room no longer exists. The server may have restarted or the session ended.</p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
           <button onClick={onBack} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #3d3d3d', borderRadius: 8, color: '#888', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Go Back</button>
-          <button onClick={() => { onBack(); setTimeout(() => window.dispatchEvent(new CustomEvent('helix:new-group-chat')), 100) }} style={{ padding: '10px 20px', background: '#fff', border: 'none', borderRadius: 8, color: '#000', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>New Group Chat</button>
+          <button onClick={() => window.location.reload()} style={{ padding: '10px 20px', background: '#fff', border: 'none', borderRadius: 8, color: '#000', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Re-sync</button>
         </div>
       </div>
     )
