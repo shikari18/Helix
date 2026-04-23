@@ -23,6 +23,7 @@ interface Props {
   onStartGroupChat?: () => void
   isMobile?: boolean
   plan?: string
+  onToast?: (msg: string, type?: 'info' | 'warn' | 'error') => void
 }
 
 export default function InputSection({ 
@@ -44,7 +45,8 @@ export default function InputSection({
   onAgentDismiss, 
   onStartGroupChat,
   isMobile = false,
-  plan = 'free'
+  plan = 'free',
+  onToast
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
