@@ -314,15 +314,8 @@ async def on_join_room(sid, data):
     
     room = room_manager.get_room(room_id)
     if not room:
-        print(f"[WebSocket] Room {room_id} not found in memory. Creating it dynamically.")
-        room_manager.rooms[room_id] = {
-            "id": room_id,
-            "createdAt": int(time.time() * 1000),
-            "participants": {},
-            "messages": [],
-            "lastActivity": int(time.time() * 1000)
-        }
-        room = room_manager.get_room(room_id)
+        print(f"[WebSocket] Room {room_id} not found.")
+        return {"error": "Room not found"}
 
     is_rejoin = participant.get("id") in room["participants"]
     participant_data = room_manager.add_participant(room_id, participant)
@@ -415,6 +408,11 @@ async def on_send_message(sid, data):
 @app.get("/")
 async def root():
     return {"message": "HELIX Backend API is running"}
+
+@app.get("/api/rooms/{room_id}/exists")
+async def check_room_exists(room_id: str):
+    room = room_manager.get_room(room_id)
+    return {"exists": room is not None}
 
 @app.post("/api/chat")
 async def api_chat(req: ChatRequest):

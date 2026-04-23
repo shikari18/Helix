@@ -103,6 +103,7 @@ export default function ChatApp() {
   const [showGroupActionModal, setShowGroupActionModal] = useState(false)
   const [modalView, setModalView] = useState<'choice' | 'join'>('choice')
   const [joinRoomCode, setJoinRoomCode] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
 
   // Persist group chat state — restore on refresh
   useEffect(() => {
@@ -1503,21 +1504,27 @@ export default function ChatApp() {
                   }}
                 />
                 <button
+                  disabled={isSearching}
                   onClick={async () => {
                     if (joinRoomCode.length === 6) {
-                      // Attempt to join — ChatApp joinGroupChat already adds to sidebar if success
-                      // But we need to check if room exists
-                      const isOnline = typeof window !== 'undefined'
-                      if (isOnline) {
-                         const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/admin/users`, {
-                            headers: { 'X-Admin-Secret': 'helix-admin-secret-2026' }
-                         }).catch(() => null)
-                         // For now, joinGroupChat will handle it. If we want immediate feedback, we'd need room_manager exposed.
-                         // We'll rely on the joinGroupChat flow for now.
-                         joinGroupChat(joinRoomCode)
-                         setShowGroupActionModal(false)
-                         setJoinRoomCode('')
-                         setModalView?.('choice')
+                      setIsSearching(true)
+                      try {
+                        const res = await fetch(`/api/rooms/${joinRoomCode}/exists`)
+                        const data = await res.json()
+                        
+                        if (data.exists) {
+                          // Room exists, proceed to join
+                          joinGroupChat(joinRoomCode)
+                          setShowGroupActionModal(false)
+                          setJoinRoomCode('')
+                          setModalView?.('choice')
+                        } else {
+                          setToast({ msg: 'Room not found. Check the code and try again.', type: 'error' })
+                        }
+                      } catch (e) {
+                        setToast({ msg: 'Connection error. Please try again.', type: 'error' })
+                      } finally {
+                        setIsSearching(false)
                       }
                     } else {
                       setToast({ msg: 'Code must be 6 digits', type: 'error' })
@@ -1525,9 +1532,12 @@ export default function ChatApp() {
                   }}
                   style={{
                     width: '100%', height: 50, background: '#fff', color: '#000', fontWeight: 600,
-                    borderRadius: 12, border: 'none', cursor: 'pointer'
+                    borderRadius: 12, border: 'none', cursor: isSearching ? 'not-allowed' : 'pointer',
+                    opacity: isSearching ? 0.7 : 1, transition: 'all 0.2s'
                   }}
-                >Confirm Join</button>
+                >
+                  {isSearching ? 'Searching Room...' : 'Confirm Join'}
+                </button>
               </div>
             )}
           </div>
