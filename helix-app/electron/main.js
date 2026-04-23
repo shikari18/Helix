@@ -19,14 +19,24 @@ function createWindow() {
     },
   });
 
+  // Set User Agent to avoid being blocked as a bot
+  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
   // Load the web app
-  const startUrl = process.env.ELECTRON_START_URL || 'https://shikari18-helix.render.com';
-  mainWindow.loadURL(startUrl);
+  const startUrl = process.env.ELECTRON_START_URL || 'https://helix-app-ueow.onrender.com/';
+  console.log(`[Desktop] Attempting to load: ${startUrl}`);
+  
+  const loadPage = () => {
+    mainWindow.loadURL(startUrl, { userAgent }).catch(e => {
+      console.error('[Desktop] Failed to load page, retrying in 5s...', e);
+      setTimeout(loadPage, 5000);
+    });
+  };
+
+  loadPage();
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    // Open DevTools by default for diagnostics until we fix the black screen
-    mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', () => {
