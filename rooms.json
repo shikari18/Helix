@@ -1,0 +1,71 @@
+{
+  "348865": {
+    "id": "348865",
+    "createdAt": 1777001302941,
+    "participants": {
+      "user-1777001302948": {
+        "id": "user-1777001302948",
+        "name": "DARK",
+        "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKfVE90J9BUVGdN69mLlEywPxWrqz6oIQS-aJWcTrlRB-zifMc=s96-c",
+        "joinedAt": 1777001459637,
+        "isOnline": false
+      }
+    },
+    "messages": [
+      {
+        "id": "f2501b60-32ed-440e-bd54-76c4487fc108",
+        "roomId": "348865",
+        "senderId": "user-1777001442681",
+        "senderName": "Shikari",
+        "senderAvatar": "https://lh3.googleusercontent.com/a/ACg8ocKJhD8NGSlzHoIynB8d2q0WGKIDrWf4Ysa-JS2ANB2UAM87EoY=s96-c",
+        "content": "hey",
+        "images": [],
+        "timestamp": 1777001446385,
+        "isHelixResponse": false
+      },
+      {
+        "id": "2d4738ba-688b-4495-8426-5a321b4b9044",
+        "roomId": "348865",
+        "senderId": "user-1777001442681",
+        "senderName": "Shikari",
+        "senderAvatar": "https://lh3.googleusercontent.com/a/ACg8ocKJhD8NGSlzHoIynB8d2q0WGKIDrWf4Ysa-JS2ANB2UAM87EoY=s96-c",
+        "content": "yo",
+        "images": [],
+        "timestamp": 1777001465235,
+        "isHelixResponse": false
+      },
+      {
+        "id": "65771d9b-9183-42ff-8398-1c359a03ea45",
+        "roomId": "348865",
+        "senderId": "user-1777001302948",
+        "senderName": "DARK",
+        "senderAvatar": "https://lh3.googleusercontent.com/a/ACg8ocKfVE90J9BUVGdN69mLlEywPxWrqz6oIQS-aJWcTrlRB-zifMc=s96-c",
+        "content": "yo",
+        "images": [],
+        "timestamp": 1777001468551,
+        "isHelixResponse": false
+      },
+      {
+        "id": "182d09fd-7d28-4b5b-8add-92d60a84860f",
+        "roomId": "348865",
+        "senderId": "user-1777001442681",
+        "senderName": "Shikari",
+        "senderAvatar": "https://lh3.googleusercontent.com/a/ACg8ocKJhD8NGSlzHoIynB8d2q0WGKIDrWf4Ysa-JS2ANB2UAM87EoY=s96-c",
+        "content": "helix you there?",
+        "images": [],
+        "timestamp": 1777001475972,
+        "isHelixResponse": false
+      },
+      {
+        "roomId": "348865",
+        "senderId": "helix",
+        "senderName": "Helix AI",
+        "content": "Helix is temporarily unavailable.",
+        "isHelixResponse": true,
+        "id": "c8f1cc3a-4fbd-4ec4-8a44-a4a23ff49b2e",
+        "timestamp": 1777001479516
+      }
+    ],
+    "lastActivity": 1777002361511
+  }
+}

@@ -480,6 +480,15 @@ export default function ChatApp() {
       if (data.reply) replyText = data.reply
     } catch (e: any) {
       if (e?.name === 'AbortError') return // stopped — already handled in handleStop
+      
+      // Attempt to extract detail from the failed response if possible
+      try {
+        if (e.message && e.message.includes('Backend service error')) {
+           replyText = "The HELIX backend is currently overloaded or experiencing API issues. Please check your API keys or try again later. 🛠️"
+        } else {
+           replyText = `📡 Connection error: ${e.message || "Unknown error"}. Please check your internet or the backend status.`
+        }
+      } catch {}
       await minDelay
     }
 

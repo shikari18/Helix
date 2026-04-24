@@ -22,15 +22,14 @@
       "icon": "build/image.ico"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
+      "oneClick": true,
+      "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "HELIX",
+      "license": "build/license.txt",
       "installerIcon": "build/image.ico",
       "uninstallerIcon": "build/image.ico",
       "installerHeader": "public/logo.png",
-      "installerHeaderIcon": "build/image.ico",
       "runAfterFinish": true
     },
     "directories": {

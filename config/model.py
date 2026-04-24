@@ -118,20 +118,27 @@ def generate(system_prompt: str, messages: list, max_tokens: int = 2048) -> str:
         return run_own_model(system_prompt, messages, max_tokens)
     
     # Try Gemma (primary)
+    gemma_err = "Not attempted"
     if GEMINI_API_KEY:
         try:
             return _call_gemini(system_prompt, messages, max_tokens)
         except Exception as e:
+            gemma_err = str(e)
             print(f"[Gemma] Failed: {e}, trying OpenRouter")
     
     # Try OpenRouter (secondary)
+    or_err = "Not attempted"
     if OPENROUTER_API_KEY:
         try:
             return _call_openrouter(system_prompt, messages, max_tokens)
         except Exception as e:
+            or_err = str(e)
             print(f"[OpenRouter] Failed: {e}")
     
-    raise Exception("All models failed — no Cloudflare fallback (safety filters)")
+    # Final fallback if both fail
+    error_msg = f"Inference failed. Gemma Error: {gemma_err}. OpenRouter Error: {or_err}."
+    print(f"[Fatal] {error_msg}")
+    raise Exception(error_msg)
 
 
 def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_tokens: int = 1024) -> str:
