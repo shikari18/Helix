@@ -129,7 +129,15 @@ export default function InputSection({
         return
       }
 
-      // Pro+ or Ultra on Desktop
+      // If already in desktop app, just switch mode
+      const isActuallyDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
+      if (isActuallyDesktop) {
+        onChatModeChange(mode)
+        setModeDropdownOpen(false)
+        return
+      }
+
+      // Pro+ or Ultra on Web -> Show download prompt
       setShowGetAgentPopup(true)
       setModeDropdownOpen(false)
       return

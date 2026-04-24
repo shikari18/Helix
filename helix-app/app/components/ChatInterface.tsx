@@ -71,6 +71,24 @@ export default function ChatInterface({
 
       const data = await response.json();
       
+      // Handle Agent Actions (Native Control)
+      if (data.agent_action && (window as any).helixDesktop) {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `⚙️ [Desktop Action] ${data.message || 'Executing command...'}`
+        }]);
+        
+        (window as any).helixDesktop.sendAction(data.action_type, data.params || {});
+        
+        (window as any).helixDesktop.onResponse((res: any) => {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: res.success ? `✅ Done: ${res.details || 'Success'}` : `❌ Failed: ${res.error}`
+          }]);
+        });
+        return;
+      }
+
       if (data.reply) {
         setMessages(prev => [...prev, { 
           role: 'assistant', 

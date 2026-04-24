@@ -26,7 +26,7 @@ export default function MessageBubble({ message, isTyping, onRegenerate }: Props
   if (role === 'user') {
     return (
       <div
-        style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}
+        style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -40,12 +40,12 @@ export default function MessageBubble({ message, isTyping, onRegenerate }: Props
         {content && (
           <div style={{
             background: '#2d2d2d',
-            padding: '14px 18px',
-            borderRadius: 18,
+            padding: '10px 16px',
+            borderRadius: 16,
             border: '1px solid #3d3d3d',
-            maxWidth: '75%',
-            fontSize: 18,
-            lineHeight: 1.6,
+            maxWidth: '85%',
+            fontSize: 16,
+            lineHeight: 1.5,
             color: '#fff',
           }}>
             {content}
@@ -104,7 +104,7 @@ export default function MessageBubble({ message, isTyping, onRegenerate }: Props
 
   return (
     <div
-      style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 8 }}
+      style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 6 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

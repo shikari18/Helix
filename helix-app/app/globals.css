@@ -240,10 +240,10 @@ h1 {
   width: 100%;
   overflow-y: scroll;
   height: 100%;
-  padding-bottom: 300px;
+  padding-bottom: 240px; /* Reduced from 300px */
   padding-left: max(40px, calc((100% - 930px) / 2));
   padding-right: max(40px, calc((100% - 930px) / 2));
-  padding-top: 20px;
+  padding-top: 10px; /* Reduced from 20px */
   box-sizing: border-box;
   scroll-behavior: smooth;
   scrollbar-width: none;
@@ -491,7 +491,7 @@ h1 {
 
 /* --- MESSAGES --- */
 .message {
-  margin-bottom: 32px;
+  margin-bottom: 16px; /* Reduced from 32px */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -507,8 +507,8 @@ h1 {
 }
 
 .message-content {
-  font-size: 20px;
-  line-height: 1.75;
+  font-size: 16px; /* Reduced from 20px */
+  line-height: 1.5; /* Reduced from 1.75 */
   color: #fff;
   max-width: 100%;
   min-width: 0;
@@ -517,7 +517,7 @@ h1 {
 
 .message.user .message-content {
   background: #2d2d2d;
-  padding: 16px 20px;
+  padding: 10px 16px; /* Reduced from 16px 20px */
   border-radius: 20px;
   border: 1px solid #3d3d3d;
   display: flex;
@@ -1688,4 +1688,8 @@ textarea::placeholder {
   font-style: italic;
   background: rgba(255,255,255,0.03);
   border-radius: 0 8px 8px 0;
+}
+/* --- DEV OVERLAY HIDE --- */
+#nextjs-portal, .nextjs-toast-errors-parent {
+  display: none !important;
 }

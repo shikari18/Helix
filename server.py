@@ -605,6 +605,40 @@ async def admin_get_users(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {"users": _users_registry}
 
+@app.post("/api/admin/register-user")
+async def api_register_user(req: dict):
+    email = req.get("email")
+    name = req.get("name")
+    picture = req.get("picture")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email required")
+    user = register_or_update_user(email, name, picture)
+    return user
+
+@app.post("/api/auth/check-blocked")
+async def api_check_blocked(req: dict):
+    email = req.get("email")
+    user = next((u for u in _users_registry if u["email"] == email), None)
+    return {"blocked": user.get("blocked", False) if user else False}
+
+@app.post("/api/auth/login-alert")
+async def api_login_alert(req: dict):
+    return {"status": "sent"}
+
+@app.post("/api/auth/welcome")
+async def api_welcome(req: dict):
+    return {"status": "sent"}
+
+@app.post("/api/auth/check-session")
+async def api_check_session(req: dict):
+    return {"valid": True}
+
+@app.post("/api/agent/execute")
+async def api_agent_execute(req: dict):
+    from services.agent_core import agent_core
+    result = agent_core.execute_command(req)
+    return result
+
 if __name__ == "__main__":
     print(f"\n HELIX Backend running at http://localhost:{PORT}")
     print(f" Workspace: {HELIX_WORKSPACE}")

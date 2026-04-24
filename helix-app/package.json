@@ -19,7 +19,17 @@
     "appId": "com.helix.app",
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico"
+      "icon": "build/image.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "HELIX",
+      "installerIcon": "build/image.ico",
+      "uninstallerIcon": "build/image.ico",
+      "runAfterFinish": true
     },
     "directories": {
       "output": "dist"
