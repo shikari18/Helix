@@ -33,6 +33,7 @@ GEMMA_MODELS = [
     "gemma-3-12b-it",
     "gemma-3-4b-it",
     "gemma-3-2b-it",
+    "gemma-3-1b-it",
 ]
 
 # ─────────────────────────────────────────────────────────────────────
@@ -112,33 +113,19 @@ def run_own_model(system_prompt: str, messages: list, max_tokens: int = 2048) ->
 def generate(system_prompt: str, messages: list, max_tokens: int = 2048) -> str:
     """
     Main inference entry point.
-    Uses Gemma models only — no Cloudflare fallback (Cloudflare has hardcoded safety filters).
+    Uses Gemma 3 models with auto-switching logic.
     """
     if USE_OWN_MODEL:
         return run_own_model(system_prompt, messages, max_tokens)
     
-    # Try Gemma (primary)
-    gemma_err = "Not attempted"
-    if GEMINI_API_KEY:
-        try:
-            return _call_gemini(system_prompt, messages, max_tokens)
-        except Exception as e:
-            gemma_err = str(e)
-            print(f"[Gemma] Failed: {e}, trying OpenRouter")
-    
-    # Try OpenRouter (secondary)
-    or_err = "Not attempted"
-    if OPENROUTER_API_KEY:
-        try:
-            return _call_openrouter(system_prompt, messages, max_tokens)
-        except Exception as e:
-            or_err = str(e)
-            print(f"[OpenRouter] Failed: {e}")
-    
-    # Final fallback if both fail
-    error_msg = f"Inference failed. Gemma Error: {gemma_err}. OpenRouter Error: {or_err}."
-    print(f"[Fatal] {error_msg}")
-    raise Exception(error_msg)
+    if not GEMINI_API_KEY:
+        raise Exception("GEMINI_API_KEY is not set.")
+
+    try:
+        return _call_gemini(system_prompt, messages, max_tokens)
+    except Exception as e:
+        print(f"[Fatal] Inference failed: {e}")
+        raise
 
 
 def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_tokens: int = 1024) -> str:
