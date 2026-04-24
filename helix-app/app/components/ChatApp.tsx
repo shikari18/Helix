@@ -594,7 +594,17 @@ export default function ChatApp() {
       // Simulate thinking for a moment to show the thought process
       await new Promise(r => setTimeout(r, 1500))
 
-      const endpoint = actionType === 'wifi_scan' ? '/api/agent/wifi-scan' : '/api/agent/execute'
+      // Detect if running in Desktop App to route to local sidecar
+      const isDesktop = typeof navigator !== 'undefined' && navigator.userAgent.includes('HelixDesktop')
+      const agentBase = isDesktop ? 'http://localhost:8001' : ''
+      
+      if (!isDesktop && (actionType === 'wifi_scan' || actionType === 'open_folder' || actionType === 'open_app')) {
+        setAgentSteps(prev => prev.map(s => s.id === stepId ? { ...s, status: 'error', thought: 'Native features require the HELIX Desktop App.' } : s))
+        setAgentRunning(false)
+        return
+      }
+
+      const endpoint = actionType === 'wifi_scan' ? `${agentBase}/api/agent/wifi-scan` : `${agentBase}/api/agent/execute`
       const body = actionType === 'wifi_scan' ? {} : { action: actionType, params }
       
       const res = await fetch(endpoint, { 
