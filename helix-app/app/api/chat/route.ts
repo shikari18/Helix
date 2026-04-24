@@ -27,8 +27,15 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
+      let detail = 'Backend service error'
+      try {
+        const parsed = JSON.parse(errorText)
+        detail = parsed.detail || parsed.error || errorText
+      } catch {
+        detail = errorText
+      }
       console.error(`[Proxy] Backend error: ${response.status}`, errorText)
-      return NextResponse.json({ error: 'Backend service error' }, { status: response.status })
+      return NextResponse.json({ error: detail }, { status: response.status })
     }
 
     const data = await response.json()

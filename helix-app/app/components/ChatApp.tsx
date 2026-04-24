@@ -470,12 +470,14 @@ export default function ChatApp() {
         minDelay,
       ])
       if (res.status === 403) {
-        // Account blocked — force logout
         localStorage.removeItem('helix_logged_in')
         window.location.href = '/signup?blocked=1'
         return
       }
-      if (!res.ok) throw new Error('API error')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'API error');
+      }
       const data = await res.json()
       if (data.reply) replyText = data.reply
     } catch (e: any) {
