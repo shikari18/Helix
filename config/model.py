@@ -203,8 +203,7 @@ def _call_gemini(system_prompt: str, messages: list, max_tokens: int) -> str:
             continue
 
     error_summary = " | ".join(errors)
-    key_prefix = (GEMINI_API_KEY[:4] + "...") if GEMINI_API_KEY else "MISSING"
-    raise Exception(f"All Gemma models failed (Key: {key_prefix}). Details: {error_summary}")
+    raise Exception(f"All Gemma models failed. Details: {error_summary}")
 
 
 # ─────────────────────────────────────────────────────────────────────
