@@ -26,36 +26,6 @@ const GREETINGS = [
   'What are we pwning today, {name}?',
 ]
 
-// Greeting response pools — shuffled per message
-const GREETING_RESPONSES: Record<string, string[]> = {
-  hey: [
-    'hey 👋', 'hey, what\'s up?', 'hey 👀', 'hey! what\'s good?', 'heyyy 👋',
-    'hey, sup?', 'hey there 👋', 'hey! how\'s it going?', 'hey 😎', 'hey, what\'s the move?',
-  ],
-  hi: [
-    'hi 👋', 'hi! how are you?', 'hi there 👋', 'hi, what\'s up?', 'hiiii 👋',
-    'hi! what\'s good?', 'hi 😊', 'hi, how\'s it going?', 'hi! what\'s on your mind?', 'hi 👀',
-  ],
-  yo: [
-    'yo 👋', 'yo, what\'s good?', 'yo! 👀', 'yo, what\'s up?', 'yooo 👋',
-    'yo! how\'s it going?', 'yo 😎', 'yo, what\'s the move?', 'yo! what\'s good?', 'yo, sup?',
-  ],
-  sup: [
-    'sup 👋', 'not much, you?', 'sup! 👀', 'sup, what\'s good?', 'supp 👋',
-    'sup! how\'s it going?', 'sup 😎', 'sup, what\'s the move?', 'sup! what\'s good?', 'sup, all good?',
-  ],
-}
-
-export function getGreetingResponse(message: string): string | null {
-  const trimmed = message.trim().toLowerCase().replace(/[!?.]+$/, '')
-  for (const [key, pool] of Object.entries(GREETING_RESPONSES)) {
-    if (trimmed === key || trimmed === key + ' ' || trimmed.startsWith(key + ' ') && trimmed.length < key.length + 4) {
-      return pool[Math.floor(Math.random() * pool.length)]
-    }
-  }
-  return null
-}
-
 function getUserName() {
   if (typeof window === 'undefined') return 'Shikari'
   return localStorage.getItem('helix_user_name') || 'Shikari'
@@ -394,30 +364,6 @@ export default function ChatApp() {
   const sendMessage = useCallback(async (text: string, images: string[] = []) => {
     if (!text.trim() && images.length === 0) return
     if (checkLimit()) { setIsLimited(true); return }
-
-    // Intercept casual greetings — reply from hardcoded pool, skip API
-    if (images.length === 0) {
-      const greetingReply = getGreetingResponse(text)
-      if (greetingReply) {
-        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, images: [], timestamp: Date.now() }
-        const replyId = (Date.now() + 1).toString()
-        if (!chatActive) {
-          setChatActive(true)
-          if (!isGhostMode) {
-            const newChat: ChatItem = { id: Date.now().toString(), title: 'Quick Hello', pinned: false, timestamp: Date.now() }
-            setChatList(prev => [newChat, ...prev])
-            setCurrentChatId(newChat.id)
-          }
-        }
-        setMessages(prev => [...prev, userMsg])
-        setInputValue('')
-        setIsThinking(true)
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        setIsThinking(false)
-        setMessages(prev => [...prev, { id: replyId, role: 'assistant', content: greetingReply, timestamp: Date.now() }])
-        return
-      }
-    }
 
     // Agent mode intent detection — intercept before API call
     if (chatMode === 'agent' && images.length === 0) {
