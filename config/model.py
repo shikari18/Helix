@@ -32,7 +32,6 @@ GEMMA_MODELS = [
     "gemma-3-27b-it",
     "gemma-3-12b-it",
     "gemma-3-4b-it",
-    "gemma-3-2b-it",
     "gemma-3-1b-it",
 ]
 
@@ -143,17 +142,29 @@ def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_t
 # GEMINI IMPLEMENTATION
 # ─────────────────────────────────────────────────────────────────────
 def _call_gemini(system_prompt: str, messages: list, max_tokens: int) -> str:
-    trimmed = messages[-40:] if len(messages) > 40 else messages
+    trimmed = messages[-30:] if len(messages) > 30 else messages
 
-    # Build contents — Gemma doesn't support system_instruction, inject as first turn
+    # Build alternating contents for Gemma
     contents = []
+    # Start with system instructions as a user turn
     contents.append({"role": "user", "parts": [{"text": f"[SYSTEM INSTRUCTIONS]\n{system_prompt}"}]})
-    contents.append({"role": "model", "parts": [{"text": "ok"}]})
+    contents.append({"role": "model", "parts": [{"text": "Understood. I will follow those instructions."}]})
 
+    last_role = "model"
     for m in trimmed:
         role = "model" if m.get("role") == "assistant" else "user"
+        # Ensure alternating roles — skip if same as last
+        if role == last_role:
+            continue
+        
         contents.append({"role": role, "parts": [{"text": m.get("content", "")}]})
+        last_role = role
 
+    # If the last role was model, we must add a user message or it fails
+    if last_role == "model":
+        contents.append({"role": "user", "parts": [{"text": "Please continue based on our history."}]})
+
+    errors = []
     import time
     for model in GEMMA_MODELS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
@@ -162,25 +173,37 @@ def _call_gemini(system_prompt: str, messages: list, max_tokens: int) -> str:
                 url,
                 json={
                     "contents": contents,
-                    "generationConfig": {"maxOutputTokens": max_tokens}
+                    "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.7}
                 },
                 headers={"Content-Type": "application/json"},
-                timeout=60
+                timeout=45
             )
+            
             if resp.status_code == 429:
-                print(f"[Gemma] Rate limited on {model}, trying next...")
+                print(f"[Gemma] {model} rate limited, switching...")
                 time.sleep(1)
                 continue
-            resp.raise_for_status()
-            reply = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+                
+            if resp.status_code != 200:
+                err_text = resp.text[:200]
+                errors.append(f"{model} ({resp.status_code}): {err_text}")
+                continue
+
+            data = resp.json()
+            if "candidates" not in data or not data["candidates"]:
+                errors.append(f"{model}: No candidates returned")
+                continue
+                
+            reply = data["candidates"][0]["content"]["parts"][0]["text"]
             if reply:
-                print(f"[Gemma] Responded with model: {model}")
+                print(f"[Gemma] Success with {model}")
                 return reply
         except Exception as e:
-            print(f"[Gemma] {model} failed: {e}")
+            errors.append(f"{model} error: {str(e)}")
             continue
 
-    raise Exception("All Gemma models failed")
+    error_summary = " | ".join(errors)
+    raise Exception(f"All Gemma models failed. Details: {error_summary}")
 
 
 # ─────────────────────────────────────────────────────────────────────
