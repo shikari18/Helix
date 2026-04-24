@@ -445,9 +445,17 @@ async def api_chat(req: ChatRequest):
             "You are a member of the conversation, not just a tool."
         )
     agent_context = (
-        "\n\n## CURRENT MODE\nThe user is currently in **Agent Mode**. When they ask you to perform an action (like scanning WiFi, running recon, etc.), you MUST respond with ONLY this raw JSON — no markdown, no code fences, no extra text whatsoever:\n{\"agent_action\": true, \"action_type\": \"wifi_scan\", \"message\": \"short one-line description\"}\nDo NOT wrap it in ```json``` or any other formatting. Output the raw JSON object and nothing else."
+        "\n\n## CURRENT MODE\nThe user is in **Agent Mode**. When they ask for a native action (WiFi scan, opening folders/files, launching apps, system info), you MUST respond with ONLY the raw JSON object — no markdown, no explanation. Just the JSON.\n\n"
+        "Supported actions:\n"
+        "- `wifi_scan`: Scan networks\n"
+        "- `open_folder`: params `{\"folder_name\": \"...\"}`\n"
+        "- `open_app`: params `{\"app_name\": \"...\"}`\n"
+        "- `screenshot`: Take a screenshot\n"
+        "- `get_system_info`: CPU/RAM info\n\n"
+        "Example: `{\"agent_action\": true, \"action_type\": \"open_folder\", \"params\": {\"folder_name\": \"screenshots\"}, \"message\": \"Opening your screenshots folder...\"}`\n"
+        "DO NOT ask for permission for these simple tasks. Just output the JSON."
         if req.agentMode 
-        else "\n\n## CURRENT MODE\nThe user is in **Chat Mode**. Respond normally with explanations and instructions. Do NOT output any JSON or agent action format under any circumstances."
+        else "\n\n## CURRENT MODE\nThe user is in **Chat Mode**. Respond normally. Do NOT output any JSON."
     )
 
     system_prompt = f"{SYSTEM_PROMPT}{user_identity}{group_chat_context}{agent_context}"

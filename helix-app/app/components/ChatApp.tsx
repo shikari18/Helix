@@ -74,6 +74,7 @@ export default function ChatApp() {
   const [modalView, setModalView] = useState<'choice' | 'join'>('choice')
   const [joinRoomCode, setJoinRoomCode] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [agentSteps, setAgentSteps] = useState<{ id: string; label: string; status: 'thinking' | 'done' | 'error'; thought?: string }[]>([])
 
   // Persist group chat state — restore on refresh
   useEffect(() => {
@@ -508,6 +509,13 @@ export default function ChatApp() {
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0])
           if (parsed.agent_action && parsed.action_type) {
+            // Auto-execute if it's a direct system command (open_folder, open_app, wifi_scan)
+            const autoExecTypes = ['wifi_scan', 'open_folder', 'open_app', 'system_command']
+            if (autoExecTypes.includes(parsed.action_type)) {
+              executeAgentAction(parsed.action_type, parsed.params || {})
+              return
+            }
+            
             setMessages(prev => prev.filter(m => m.content !== text || m.role !== 'user'))
             setAgentPrompt({ actionType: parsed.action_type, message: parsed.message, originalMessage: text })
             return
@@ -559,40 +567,73 @@ export default function ChatApp() {
     setTimeout(() => scrollDuringTyping(), 100)
   }, [chatActive, isGhostMode, scrollToBottom, scrollDuringTyping])
 
-  const executeAgentAction = useCallback(async (actionType: string) => {
+  const executeAgentAction = useCallback(async (actionType: string, params: any = {}) => {
     setAgentPrompt(null)
     setAgentRunning(true)
+    
+    // Create initial step
+    const stepId = Date.now().toString()
+    let initialLabel = 'Starting task...'
+    let thought = 'Initializing Helix Agent Core...'
+    
+    if (actionType === 'wifi_scan') {
+      initialLabel = 'Scanning WiFi'
+      thought = 'Accessing network adapter to enumerate nearby access points...'
+    } else if (actionType === 'open_folder') {
+      initialLabel = `Opening ${params.folder_name || 'folder'}`
+      thought = 'Locating system path and triggering Windows Explorer...'
+    } else if (actionType === 'open_app') {
+      initialLabel = `Opening ${params.app_name || 'application'}`
+      thought = 'Searching for application executable and initializing process...'
+    }
 
-    const runningId = Date.now().toString()
-    setMessages(prev => [...prev, {
-      id: runningId, role: 'assistant',
-      content: actionType === 'wifi_scan' ? '📡 Scanning for WiFi networks...' : '⚙️ Running...',
-      timestamp: Date.now(),
-    }])
+    setAgentSteps([{ id: stepId, label: initialLabel, status: 'thinking', thought }])
     setChatActive(true)
 
     try {
-      const res = await fetch('/api/agent/wifi-scan', { method: 'POST' })
+      // Simulate thinking for a moment to show the thought process
+      await new Promise(r => setTimeout(r, 1500))
+
+      const endpoint = actionType === 'wifi_scan' ? '/api/agent/wifi-scan' : '/api/agent/execute'
+      const body = actionType === 'wifi_scan' ? {} : { action: actionType, params }
+      
+      const res = await fetch(endpoint, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
       const data = await res.json()
 
-      let resultText = ''
-      if (!data.success) {
-        resultText = `❌ Scan failed: ${data.error}`
-      } else {
-        const nets = data.networks as { ssid: string; signal: string; security: string; bssid: string }[]
-        resultText = `📡 **Found ${data.count} WiFi network${data.count !== 1 ? 's' : ''}**\n\n`
-        resultText += `| # | SSID | Signal | Security | BSSID |\n`
-        resultText += `|---|------|--------|----------|-------|\n`
-        nets.forEach((n, i) => {
-          resultText += `| ${i + 1} | ${n.ssid || '(Hidden)'} | ${n.signal} | ${n.security || 'Unknown'} | ${n.bssid || '—'} |\n`
-        })
-        resultText += `\n*Scan completed. ${data.count} network${data.count !== 1 ? 's' : ''} detected.*`
-      }
+      if (data.success || (actionType === 'wifi_scan' && data.count !== undefined)) {
+        // Mark step as done
+        setAgentSteps(prev => prev.map(s => s.id === stepId ? { ...s, status: 'done' } : s))
+        
+        // Add final "done" message
+        setTimeout(() => {
+          setAgentSteps(prev => [...prev, { id: 'final', label: 'Done', status: 'done' }])
+        }, 500)
 
-      setMessages(prev => prev.map(m => m.id === runningId ? { ...m, content: resultText } : m))
-    } catch {
-      setMessages(prev => prev.map(m => m.id === runningId ? { ...m, content: '❌ Agent action failed. Make sure the backend server is running.' } : m))
-    } finally {
+        // Show result as a chat message after a delay
+        setTimeout(() => {
+          let resultText = data.details || 'Task completed successfully.'
+          if (actionType === 'wifi_scan') {
+             const nets = data.networks as any[]
+             resultText = `📡 **Found ${data.count} WiFi networks**\n\n`
+             resultText += `| SSID | Signal | Security |\n|---|---|---|\n`
+             nets.slice(0, 5).forEach(n => resultText += `| ${n.ssid || '(Hidden)'} | ${n.signal} | ${n.security || '—'} |\n`)
+          }
+          const replyId = (Date.now() + 2).toString()
+          setMessages(prev => [...prev, { id: replyId, role: 'assistant', content: resultText, timestamp: Date.now() }])
+          setAgentSteps([]) // Clear steps
+          setAgentRunning(false)
+        }, 2000)
+
+      } else {
+        setAgentSteps(prev => prev.map(s => s.id === stepId ? { ...s, status: 'error', thought: `Error: ${data.error}` } : s))
+        setAgentRunning(false)
+      }
+    } catch (e) {
+      setAgentSteps(prev => prev.map(s => s.id === stepId ? { ...s, status: 'error', thought: 'Network or server error.' } : s))
       setAgentRunning(false)
     }
   }, [])
@@ -1209,6 +1250,7 @@ export default function ChatApp() {
                 <ChatMessages
                   messages={messages}
                   isThinking={isThinking}
+                  agentSteps={agentSteps}
                   messagesEndRef={messagesEndRef}
                   typingMsgId={typingMsgId}
                   onRegenerate={handleRegenerate}

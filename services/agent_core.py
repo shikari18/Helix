@@ -49,6 +49,26 @@ class HelixAgentCore:
                 pyautogui.screenshot(path)
                 return {"success": True, "path": path}
                 
+            elif action == "open_folder":
+                folder_name = params.get("folder_name", "").lower()
+                path = params.get("path")
+                
+                if not path:
+                    if "screenshot" in folder_name:
+                        # Find Windows screenshot folder
+                        pictures = os.path.join(os.path.expanduser("~"), "Pictures")
+                        path = os.path.join(pictures, "Screenshots")
+                        if not os.path.exists(path):
+                            path = pictures # Fallback to Pictures
+                    else:
+                        path = os.path.expanduser("~") # Fallback to Home
+                
+                if sys.platform == "win32":
+                    os.startfile(path)
+                else:
+                    subprocess.Popen(["open", path])
+                return {"success": True, "details": f"Opened folder: {path}"}
+                
             elif action == "get_system_info":
                 return {
                     "success": True,
