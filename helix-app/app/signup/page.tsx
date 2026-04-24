@@ -20,8 +20,18 @@ export default function SignupPage() {
   const otpRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('helix_logged_in')
-    if (loggedIn === 'true') router.push('/')
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('blocked') || params.get('logout')) {
+        localStorage.removeItem('helix_logged_in')
+        localStorage.removeItem('helix_user_email')
+        setSplashDone(true)
+        return
+      }
+      
+      const loggedIn = localStorage.getItem('helix_logged_in')
+      if (loggedIn === 'true') router.push('/')
+    }
     const timer = setTimeout(() => setSplashDone(true), 0)
     return () => clearTimeout(timer)
   }, [])

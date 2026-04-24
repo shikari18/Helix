@@ -12,7 +12,13 @@ function createWindow() {
     width: 1280,
     height: 800,
     backgroundColor: '#0a0a0a',
-    frame: true, // Ensure standard window frame (min/max/close)
+    frame: false, // Use frameless for custom title bar overlay
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0a0a0a',
+      symbolColor: '#ffffff',
+      height: 32
+    },
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -26,16 +32,23 @@ function createWindow() {
 
   // Load the web app
   const startUrl = process.env.ELECTRON_START_URL || 'https://helix-app-ueow.onrender.com/';
-  console.log(`[Desktop] Attempting to load: ${startUrl}`);
   
   const loadPage = () => {
     mainWindow.loadURL(startUrl, { userAgent }).catch(e => {
-      console.error('[Desktop] Failed to load page, retrying in 5s...', e);
-      setTimeout(loadPage, 5000);
+      console.error('[Desktop] Failed to load page, showing offline page...', e);
+      mainWindow.loadFile(path.join(__dirname, 'offline.html'));
     });
   };
 
   loadPage();
+
+  // Handle network failure during navigation
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    // -106 is ERR_INTERNET_DISCONNECTED
+    if (errorCode === -106 || errorCode === -105 || errorCode === -102) {
+      mainWindow.loadFile(path.join(__dirname, 'offline.html'));
+    }
+  });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();

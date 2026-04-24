@@ -24,11 +24,13 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": "always",
+      "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "HELIX",
       "installerIcon": "build/image.ico",
       "uninstallerIcon": "build/image.ico",
+      "installerHeader": "public/logo.png",
+      "installerHeaderIcon": "build/image.ico",
       "runAfterFinish": true
     },
     "directories": {
