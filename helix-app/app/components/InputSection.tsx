@@ -50,6 +50,7 @@ export default function InputSection({
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDictating, setIsDictating] = useState(false)
@@ -203,20 +204,21 @@ export default function InputSection({
 
   return (
     <div className="input-section">
+      {uploadedImages.length > 0 && (
+        <div className="image-preview-container active" style={{ maxWidth: 1000, margin: '0 auto', width: '100%' }}>
+          {uploadedImages.map((src, i) => (
+            <div key={i} className="image-preview" onClick={() => setPreviewImage(src)}>
+              <img src={src} alt="" />
+              <button onClick={(e) => { e.stopPropagation(); setUploadedImages(prev => prev.filter((_, j) => j !== i)) }} className="remove-image">×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className={`input-container ${isGhostMode ? 'ghost-mode' : ''} ${isDictating ? 'dictating' : ''}`}>
         <canvas ref={dictCanvasRef} id="dictBorderCanvas"></canvas>
         <canvas ref={ghostCanvasRef} id="ghostBorderCanvas"></canvas>
         
-        {uploadedImages.length > 0 && (
-          <div className="image-preview-container active">
-            {uploadedImages.map((src, i) => (
-              <div key={i} className="image-preview">
-                <img src={src} alt="" />
-                <button onClick={() => setUploadedImages(prev => prev.filter((_, j) => j !== i))} className="remove-image">×</button>
-              </div>
-            ))}
-          </div>
-        )}
 
         <div className="input-wrapper">
           <div className="textarea-wrapper">
@@ -318,6 +320,29 @@ export default function InputSection({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div 
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 3000,
+            background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out', padding: 40
+          }}
+        >
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            style={{ 
+              maxWidth: '90%', maxHeight: '90%', 
+              borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              objectFit: 'contain'
+            }} 
+          />
         </div>
       )}
     </div>

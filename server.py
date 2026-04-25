@@ -641,6 +641,176 @@ async def api_welcome(req: dict):
 async def api_check_session(req: dict):
     return {"valid": True}
 
+# ── OTP STORE (in-memory) ──
+import random as _random
+import smtplib
+from email.mime.text import MIMEText
+
+_otp_store: dict = {}  # email -> {code, expires_at, name}
+
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASS = os.getenv("SMTP_PASS", "")
+FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
+
+def send_otp_email(to_email: str, code: str) -> bool:
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[OTP] Code for {to_email}: {code}")
+        return True
+    try:
+        from email.mime.multipart import MIMEMultipart
+
+        html = f"""<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="dark" />
+  <meta name="supported-color-schemes" content="dark" />
+  <title>HELIX Verification</title>
+  <style>
+    :root {{ color-scheme: dark; }}
+    body {{
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #141414 !important;
+      -webkit-text-size-adjust: 100%;
+    }}
+    table {{ border-collapse: collapse; }}
+    .outer-bg {{ background-color: #141414 !important; }}
+    .card-bg {{ background-color: #1a1a1a !important; }}
+    .code-bg {{ background-color: #111111 !important; }}
+    .footer-bg {{ background-color: #161616 !important; }}
+    @media (prefers-color-scheme: dark) {{
+      body, .outer-bg {{ background-color: #141414 !important; }}
+      .card-bg {{ background-color: #1a1a1a !important; }}
+      .code-bg {{ background-color: #111111 !important; }}
+    }}
+  </style>
+</head>
+<body bgcolor="#141414" style="margin:0;padding:0;background-color:#141414 !important;">
+
+  <!-- Preheader (hidden) -->
+  <span style="display:none;max-height:0;overflow:hidden;">Your HELIX verification code &#847;</span>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#141414" class="outer-bg"
+    style="background-color:#141414 !important;padding:48px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" bgcolor="#1a1a1a" class="card-bg"
+          style="background-color:#1a1a1a !important;border:1px solid #2a2a2a;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#1a1a1a" class="card-bg"
+              style="background-color:#1a1a1a !important;padding:28px 36px 20px;border-bottom:1px solid #252525;">
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">Helix</span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td bgcolor="#1a1a1a" class="card-bg"
+              style="background-color:#1a1a1a !important;padding:36px 36px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+              <p style="margin:0 0 6px;font-size:11px;color:#555555;text-transform:uppercase;letter-spacing:2px;font-weight:700;">Verification Code</p>
+              <h1 style="margin:0 0 16px;font-size:26px;font-weight:500;color:#e8e8e8;line-height:1.25;">Confirm your email</h1>
+              <p style="margin:0 0 28px;font-size:14px;color:#666666;line-height:1.75;">
+                Use the code below to verify your identity and sign in to your HELIX account.
+              </p>
+
+              <!-- Code Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td align="center" bgcolor="#111111" class="code-bg"
+                    style="background-color:#111111 !important;border:1px solid #2a2a2a;border-radius:12px;padding:26px 16px;">
+                    <span style="font-size:42px;font-weight:700;letter-spacing:16px;color:#ffffff !important;font-family:'Courier New',Courier,monospace;">{code}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:12px;color:#444444;line-height:1.75;">
+                If you didn't request this, you can safely ignore this email. Someone may have entered your address by mistake.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td bgcolor="#161616" class="footer-bg"
+              style="background-color:#161616 !important;padding:16px 36px 20px;border-top:1px solid #212121;">
+              <p style="margin:0;font-size:11px;color:#333333;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+                &copy; 2025 Helix Core &middot; All rights reserved
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>"""
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Your HELIX verification code"
+        msg["From"] = f"Helix <{FROM_EMAIL}>"
+        msg["To"] = to_email
+        msg.attach(MIMEText(f"Your HELIX verification code is: {code}", "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(FROM_EMAIL, [to_email], msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[OTP] Email send failed: {e}")
+        return False
+
+@app.post("/api/auth/send-otp")
+async def api_send_otp(req: dict):
+    email = req.get("email", "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email")
+
+    code = str(_random.randint(100000, 999999))
+    expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    _otp_store[email] = {"code": code, "expires_at": expires}
+
+    ok = send_otp_email(email, code)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to send email")
+
+    return {"status": "sent"}
+
+@app.post("/api/auth/verify-otp")
+async def api_verify_otp(req: dict):
+    email = req.get("email", "").strip().lower()
+    code = req.get("code", "").strip()
+
+    entry = _otp_store.get(email)
+    if not entry:
+        raise HTTPException(status_code=400, detail="No OTP found for this email. Request a new one.")
+
+    if datetime.now(timezone.utc) > entry["expires_at"]:
+        del _otp_store[email]
+        raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+
+    if entry["code"] != code:
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    del _otp_store[email]
+
+    # Register or update user
+    name = email.split("@")[0].capitalize()
+    user = register_or_update_user(email, name)
+
+    return {"email": user["email"], "name": user["name"], "plan": user.get("plan", "free")}
+
 @app.post("/api/agent/execute")
 async def api_agent_execute(req: dict):
     from services.agent_core import agent_core

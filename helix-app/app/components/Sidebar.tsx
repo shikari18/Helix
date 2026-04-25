@@ -163,15 +163,14 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
       <div style={{
         position: 'fixed', top: 0, left: open ? 0 : -300,
         width: 300, height: '100vh',
-        background: '#1a1a1a', borderRight: '1px solid #2d2d2d',
-        borderRadius: '0 20px 0 20px',
+        background: '#111', borderRight: '1px solid #222',
         transition: 'left 0.3s ease', zIndex: 200,
         display: 'flex', flexDirection: 'column',
       }}>
         {/* Header */}
-        <div style={{ padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d2d2d' }}>
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#fff' }}>Helix</span>
-          <span style={{ fontSize: 12, color: '#666', background: '#2d2d2d', padding: '2px 8px', borderRadius: 6 }}>{getPlanName()}</span>
+        <div style={{ padding: '24px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>Helix</span>
+          <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>{getPlanName()}</span>
         </div>
 
         {/* New Chat */}
@@ -264,187 +263,56 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           Practice
         </button>
 
-        {/* Group Chats Section */}
+        {/* Group Chats List */}
         {groupChats.length > 0 && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 28px 8px', marginTop: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GROUP CHATS</span>
+          <div style={{ padding: '0 12px 12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px 6px' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5 }}>GROUP CHATS</span>
               <button
                 onClick={() => setShowClearGroupsConfirm(true)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#666', fontFamily: 'inherit', transition: 'color 0.2s' }}
-                onMouseOver={e => (e.currentTarget.style.color = '#b0b0b0')}
-                onMouseOut={e => (e.currentTarget.style.color = '#666')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}
               >
-                Clear All
+                Clear
               </button>
             </div>
-            <div style={{ padding: '0 16px' }}>
-              {groupChats.map(chat => <ChatItem key={chat.id} chat={chat} />)}
-            </div>
-          </>
+            {groupChats.map(chat => <ChatItem key={chat.id} chat={chat} />)}
+          </div>
         )}
 
-        {/* Recent Chats Header */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          padding: '16px 28px 8px', 
-          marginTop: 8,
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>RECENT CHATS</span>
-          <button
-            onClick={() => setShowClearConfirm(true)}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer', 
-              fontSize: 12, 
-              color: '#666', 
-              fontFamily: 'inherit',
-              transition: 'color 0.2s',
-            }}
-            onMouseOver={e => (e.currentTarget.style.color = '#b0b0b0')}
-            onMouseOut={e => (e.currentTarget.style.color = '#666')}
-          >
-            Clear All
-          </button>
-        </div>
-
-        {/* Chat list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+        {/* Recent Chats Section */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 6px' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5 }}>RECENT CHATS</span>
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}
+            >
+              Clear
+            </button>
+          </div>
           {regularChats.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#505050' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#505050" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-              <span style={{ fontSize: 13 }}>No chats yet</span>
-            </div>
+            <div style={{ padding: '40px 20px', color: '#333', fontSize: 12, textAlign: 'center' }}>No chats yet</div>
           ) : (
             regularChats.map(chat => <ChatItem key={chat.id} chat={chat} />)
           )}
         </div>
 
-        {/* Clear All Confirmation Dialog */}
-        {showClearConfirm && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 400,
-            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <div style={{
-              background: '#1a1a1a', border: '1px solid #2d2d2d',
-              borderRadius: 16, padding: 28, width: 320,
-              boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-            }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10 }}>Clear All Chats</h3>
-              <p style={{ fontSize: 14, color: '#888', lineHeight: 1.6, marginBottom: 24 }}>
-                Are you sure you want to clear all chat history? This action cannot be undone.
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => setShowClearConfirm(false)}
-                  style={{
-                    flex: 1, padding: '12px', borderRadius: 10,
-                    border: '1px solid #3d3d3d', background: '#2d2d2d',
-                    color: '#fff', fontSize: 14, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                  onMouseOut={e => (e.currentTarget.style.background = '#2d2d2d')}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleClearAll}
-                  style={{
-                    flex: 1, padding: '12px', borderRadius: 10,
-                    border: 'none', background: '#e53935',
-                    color: '#fff', fontSize: 14, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#c62828')}
-                  onMouseOut={e => (e.currentTarget.style.background = '#e53935')}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Clear Group Chats Confirmation Dialog */}
-        {showClearGroupsConfirm && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 400,
-            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <div style={{
-              background: '#1a1a1a', border: '1px solid #2d2d2d',
-              borderRadius: 16, padding: 28, width: 320,
-              boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-            }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10 }}>Clear All Group Chats</h3>
-              <p style={{ fontSize: 14, color: '#888', lineHeight: 1.6, marginBottom: 24 }}>
-                Are you sure you want to clear all group chats?
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => setShowClearGroupsConfirm(false)}
-                  style={{
-                    flex: 1, padding: '12px', borderRadius: 10,
-                    border: '1px solid #3d3d3d', background: '#2d2d2d',
-                    color: '#fff', fontSize: 14, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#3d3d3d')}
-                  onMouseOut={e => (e.currentTarget.style.background = '#2d2d2d')}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleClearAllGroups}
-                  style={{
-                    flex: 1, padding: '12px', borderRadius: 10,
-                    border: 'none', background: '#e53935',
-                    color: '#fff', fontSize: 14, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#c62828')}
-                  onMouseOut={e => (e.currentTarget.style.background = '#e53935')}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Footer */}
-        <div style={{ borderTop: '1px solid #2d2d2d', padding: 12, position: 'relative' }}>
+        <div style={{ borderTop: '1px solid #222', padding: 12, position: 'relative' }}>
           <div 
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
-            onMouseOver={e => (e.currentTarget.style.background = '#2d2d2d')}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseOver={e => (e.currentTarget.style.background = '#1a1a1a')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <div style={{ width: 36, height: 36, borderRadius: 18, background: '#fff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1a1a', fontWeight: 600, fontSize: 14, flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 6, background: '#222', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: 12, flexShrink: 0 }}>
               {userPicture ? <img src={userPicture} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : userInitial}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>{userName}</div>
-              <div style={{ fontSize: 12, color: '#808080' }}>{userEmail || getPlanName()}</div>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userName}</div>
+              <div style={{ fontSize: 11, color: '#555', fontWeight: 500 }}>{getPlanName()} Account</div>
             </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
             </svg>
           </div>
@@ -454,62 +322,63 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
             <>
               {/* Close on outside click */}
               <div onClick={() => setDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
-              <div style={{
-                position: 'fixed',
-                bottom: isMobile ? '70px' : '20px',
-                left: isMobile ? '10px' : '272px',
-                width: isMobile ? 'calc(100% - 20px)' : '210px',
-                background: '#161616',
-                border: '1px solid #2d2d2d',
-                borderRadius: 14,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.7)',
-                zIndex: 300,
-                overflow: 'hidden',
-                animation: 'slideUp 0.15s ease-out',
-              }}>
+              <div style={
+                isMobile
+                  ? {
+                      position: 'absolute',
+                      bottom: '64px',
+                      left: 0,
+                      right: 0,
+                      background: '#161616',
+                      borderTop: '1px solid #222',
+                      borderBottom: '1px solid #222',
+                      zIndex: 300,
+                      overflow: 'hidden',
+                      animation: 'slideUp 0.15s ease-out',
+                    }
+                  : {
+                      position: 'fixed',
+                      bottom: '20px',
+                      left: '300px',
+                      width: '210px',
+                      background: '#161616',
+                      border: '1px solid #222',
+                      borderLeft: 'none',
+                      borderRadius: '0 12px 12px 0',
+                      boxShadow: '10px 0 40px rgba(0,0,0,0.5)',
+                      zIndex: 300,
+                      overflow: 'hidden',
+                      animation: 'slideIn 0.15s ease-out',
+                    }
+              }>
                 <style>{`
-                  .menu-item { padding: 9px 12px; cursor: pointer; font-size: 13px; color: #999; display: flex; alignItems: center; gap: 8px; transition: all 0.15s; }
-                  .menu-item:hover { background: #222; color: #fff; }
+                  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+                  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+                  .menu-item { padding: 12px 16px; cursor: pointer; font-size: 13px; color: #888; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+                  .menu-item:hover { background: #1a1a1a; color: #fff; }
                 `}</style>
 
-                {/* Plans Management */}
-                <div style={{ padding: '10px 12px', borderBottom: '1px solid #282828', background: '#1a1a1a' }}>
-                   <div style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 2 }}>Current Plan</div>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{getPlanName()}</span>
-                      <Link href="/pricing" onClick={() => setDropdownOpen(false)} style={{ fontSize: 10, color: '#5a5aff', textDecoration: 'none', fontWeight: 600 }}>Upgrade</Link>
-                   </div>
-                   <div 
-                      onClick={() => { setDropdownOpen(false); window.open('/cancel-plan', '_blank') }}
-                      style={{ fontSize: 10, color: '#333', marginTop: 6, cursor: 'pointer', transition: 'color 0.2s' }}
-                      onMouseOver={e => e.currentTarget.style.color = '#666'}
-                      onMouseOut={e => e.currentTarget.style.color = '#333'}
-                   >
-                     Cancel plan
-                   </div>
-                </div>
-
                 <div className="menu-item" onClick={() => { setDropdownOpen(false); /* Open settings */ }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/></svg>
                   Settings
                 </div>
 
                 {!isMobile && (
                   <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('/download', '_blank'); }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     Download App
                   </div>
                 )}
 
                 <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('https://helix.com/learn', '_blank'); }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Learn more
                 </div>
 
-                <div style={{ height: 1, background: '#2d2d2d', margin: '4px 0' }} />
+                <div style={{ height: 1, background: '#222' }} />
 
                 <div className="menu-item" style={{ color: '#ff4d4d' }} onClick={() => { setDropdownOpen(false); onLogout() }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   Log out
                 </div>
               </div>
@@ -517,7 +386,6 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           )}
         </div>
       </div>
-
     </>
   )
 }

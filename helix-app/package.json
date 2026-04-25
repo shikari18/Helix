@@ -1,6 +1,9 @@
 {
   "name": "helix-app",
+  "productName": "HELIX AI",
   "version": "0.1.0",
+  "description": "The sharpest agentic AI platform for system control and intelligent chat.",
+  "author": "Shikari",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -16,7 +19,7 @@
     "build:exe": "next build && electron-builder"
   },
   "build": {
-    "appId": "com.helix.app",
+    "appId": "com.shikari.helix",
     "win": {
       "target": "nsis",
       "icon": "build/image.ico"

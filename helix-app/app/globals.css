@@ -507,7 +507,7 @@ h1 {
 }
 
 .message-content {
-  font-size: 16px; /* Reduced from 20px */
+  font-size: 20px; /* Reduced from 20px */
   line-height: 1.5; /* Reduced from 1.75 */
   color: #fff;
   max-width: 100%;
@@ -678,11 +678,11 @@ h1 {
 
 .input-container {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   background: #1a1a1a;
-  border-radius: 28px;
-  padding: 20px 24px;
+  border-radius: 32px;
+  padding: 24px 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   transition: border-color 0.3s, box-shadow 0.3s;
   position: relative;
@@ -736,7 +736,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: 80px;
+  min-height: 140px;
   max-height: 400px;
 }
 
@@ -922,51 +922,75 @@ textarea::placeholder {
   position: relative;
 }
 
+.desktop-links {
+  display: flex;
+}
+.mobile-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-links {
+    display: none !important;
+  }
+  .mobile-toggle {
+    display: flex !important;
+  }
+}
+
 .mode-pill {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 12px;
-  height: 32px;
-  background: #1e1e1e;
-  border: 1px solid #2d2d2d;
-  border-radius: 16px;
+  gap: 10px;
+  padding: 0 16px;
+  height: 40px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
   color: #fff;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .mode-pill:hover {
-  background: #2a2a2a;
-  border-color: #505050;
+  background: #222;
+  border-color: #444;
 }
 
 .mode-pill.agent-active {
-  border-color: #5a5aff;
-  color: #a0a0ff;
+  background: #222;
+  border-color: #fff;
+  color: #fff;
+}
+
+.mode-pill.agent-active:hover {
+  background: rgba(120, 80, 200, 0.25);
+  border-color: rgba(160, 120, 255, 0.6);
+  box-shadow: 0 0 20px rgba(160, 120, 255, 0.3);
 }
 
 .mode-pill svg { 
-  color: #b0b0b0; 
+  transition: color 0.3s ease;
+  color: inherit;
 }
 
 .mode-dropdown {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   left: 0;
   background: #141414;
-  border: 1px solid #2a2a2a;
-  border-radius: 16px;
+  border: 1px solid #333;
+  border-radius: 12px;
   padding: 6px;
-  min-width: 120px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+  min-width: 140px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   display: none;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   z-index: 200;
 }
 
@@ -978,14 +1002,16 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: all 0.15s ease;
+  color: #ccc;
 }
 
 .mode-option:hover {
   background: #222;
+  color: #fff;
 }
 
 .mode-option svg {
@@ -1055,11 +1081,15 @@ textarea::placeholder {
 /* --- IMAGE PREVIEW --- */
 .image-preview-container {
   display: none;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-  max-height: 220px;
-  overflow-y: auto;
+  gap: 10px;
+  margin-bottom: 0px;
+  overflow-x: auto;
+  padding: 4px;
+  scrollbar-width: none;
+}
+
+.image-preview-container::-webkit-scrollbar {
+  display: none;
 }
 
 .image-preview-container.active {
@@ -1068,19 +1098,19 @@ textarea::placeholder {
 
 .image-preview {
   position: relative;
-  width: 100px;
-  height: 100px;
-  border-radius: 12px;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  border: 2px solid #2d2d2d;
+  border: 1.5px solid #222;
   transition: all 0.2s;
   flex-shrink: 0;
+  background: #111;
 }
 
 .image-preview:hover {
-  border-color: #505050;
-  transform: scale(1.02);
+  border-color: #444;
 }
 
 .image-preview img {
@@ -1093,19 +1123,26 @@ textarea::placeholder {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.7);
-  border: none;
-  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 16px;
-  transition: all 0.2s;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.15s;
 }
+
+.remove-image:hover {
+  background: #ff4d4d;
+  border-color: #ff4d4d;
+}
+
 
 /* --- MESSAGE IMAGES --- */
 .message-images {

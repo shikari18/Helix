@@ -253,18 +253,38 @@ export default function SignupPage() {
       <div style={{ height: '100vh', width: '100vw', background: '#141414', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
         {/* ── Navbar ── */}
-        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', flexShrink: 0 }}>
+        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src="/image.png?v=2" alt="Helix" style={{ width: 32, height: 32, objectFit: 'contain', mixBlendMode: 'screen' }} />
             <span style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>Helix</span>
           </div>
 
+          {/* Links */}
+          <div className="desktop-links" style={{ alignItems: 'center', gap: 32 }}>
+            {NAV_LINKS.map((link, i) => (
+              <Link
+                key={i}
+                href={link.href}
+                className="su-link"
+                style={{ color: '#aaa', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'color 0.15s' }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="desktop-links" style={{ alignItems: 'center', gap: 16 }}>
+             <button onClick={() => { setIsSignUp(false); setEmailStep('main') }} className="su-link" style={{ background: 'transparent', border: 'none', color: '#ccc', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'color 0.15s' }}>Sign In</button>
+             <button onClick={() => { setIsSignUp(true); setEmailStep('main') }} style={{ padding: '8px 16px', borderRadius: 20, border: 'none', background: '#e8e8e8', color: '#111', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Get started</button>
+          </div>
+
           {/* Hamburger */}
           <button
-            className="menu-btn"
+            className="menu-btn mobile-toggle"
             onClick={() => setMenuOpen(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, transition: 'color 0.15s' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', alignItems: 'center', justifyContent: 'center', padding: 4, transition: 'color 0.15s' }}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <line x1="3" y1="7" x2="21" y2="7"/>
@@ -330,6 +350,7 @@ export default function SignupPage() {
             </div>
           </div>
         )}
+
 
         {/* ── Main content ── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px', overflowY: 'auto' }}>
