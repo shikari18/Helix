@@ -99,8 +99,12 @@ export default function SignupPage() {
     setError('')
     const google = (window as any).google
     if (!google) { setError('Google login not ready. Please try again.'); return }
+    
+    const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
+
     google.accounts.id.initialize({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '527264492890-pf88n280plhshr7q15f8j1dptqtl87ui.apps.googleusercontent.com',
+      ux_mode: isDesktop ? 'redirect' : 'popup', // Use redirect in desktop to avoid iframe issues
       callback: async (response: any) => {
         const payload = JSON.parse(atob(response.credential.split('.')[1]))
         if (payload.email) {
@@ -114,7 +118,13 @@ export default function SignupPage() {
         setTimeout(() => router.push('/'), 800)
       }
     })
-    google.accounts.id.prompt()
+    
+    // In desktop, the popup often fails, so we trigger the internal Google flow
+    if (isDesktop) {
+        google.accounts.id.prompt(); // Fallback to prompt if redirect is not preferred
+    } else {
+        google.accounts.id.prompt();
+    }
   }
 
   const [showCountries, setShowCountries] = useState(false)

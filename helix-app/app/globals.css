@@ -46,6 +46,30 @@ body {
   touch-action: manipulation;
 }
 
+/* --- ELECTRON DRAGGING --- */
+.title-bar-drag {
+  -webkit-app-region: drag;
+  height: 42px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10001;
+  pointer-events: auto;
+  display: none;
+}
+
+/* Show only on desktop */
+:global(.is-desktop) .title-bar-drag {
+  display: block;
+}
+
+.title-bar-drag button, 
+.title-bar-drag a,
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
 /* --- VOICE LIGHT EFFECT --- */
 .voice-light-overlay {
   position: fixed;

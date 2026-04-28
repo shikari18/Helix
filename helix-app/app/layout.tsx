@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import PWAInstaller from './components/PWAInstaller'
+import DesktopClassManager from './components/DesktopClassManager'
 
 export const metadata: Metadata = {
   title: 'Helix',
@@ -31,6 +32,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  useEffect(() => {
+    const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop')
+    if (isDesktop) {
+      document.body.classList.add('is-desktop')
+    }
+  }, [])
+
   return (
     <html lang="en">
       <head>
@@ -42,6 +50,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
+        <DesktopClassManager />
+        <div className="title-bar-drag"></div>
         <RegistryGuard>
           <PWAInstaller />
           {children}
