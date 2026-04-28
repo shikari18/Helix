@@ -13,7 +13,15 @@ interface ChatMessagesProps {
   typingMsgId?: string | null;
   onRegenerate?: () => void;
   agentSteps?: { id: string; label: string; status: 'thinking' | 'done' | 'error'; thought?: string }[];
+  chatMode?: 'chat' | 'agent';
 }
+
+const BrainIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 4.5a2.5 2.5 0 0 0-4.96.44 2.5 2.5 0 0 0-2.79-3.56 2.5 2.5 0 0 0 .5 4.78 2.5 2.5 0 0 0 .75 4.1 2.5 2.5 0 0 0 4 2.5V4.5Z"/>
+    <path d="M12 4.5a2.5 2.5 0 0 1 4.96.44 2.5 2.5 0 0 1 2.79.31 2.5 2.5 0 0 1-.25 4.78 2.5 2.5 0 0 1-.75 4.1 2.5 2.5 0 0 1-4 2.5V4.5Z"/>
+  </svg>
+)
 
 const REASONING_THOUGHTS = [
   "Analyzing target system architecture...",
@@ -74,11 +82,7 @@ function ReasoningBlock() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4"/>
-                <path d="M12 8h.01"/>
-            </svg>
+            <BrainIcon />
             <span>Reasoning</span>
         </div>
         <svg 
@@ -95,7 +99,7 @@ function ReasoningBlock() {
             background: 'rgba(255,255,255,0.03)', 
             borderLeft: '2px solid rgba(255,255,255,0.1)',
             color: '#888',
-            fontSize: 14,
+            fontSize: 15,
             lineHeight: '1.6',
             fontStyle: 'italic',
             animation: 'slideDown 0.2s ease'
@@ -116,7 +120,7 @@ function ReasoningBlock() {
   );
 }
 
-export default function ChatMessages({ messages, isThinking, isLoading, messagesEndRef, typingMsgId, onRegenerate, agentSteps }: ChatMessagesProps) {
+export default function ChatMessages({ messages, isThinking, isLoading, messagesEndRef, typingMsgId, onRegenerate, agentSteps, chatMode }: ChatMessagesProps) {
   const thinking = isThinking || isLoading || false;
 
   return (
@@ -127,6 +131,7 @@ export default function ChatMessages({ messages, isThinking, isLoading, messages
           message={message}
           isTyping={message.id === typingMsgId}
           onRegenerate={message.role === 'assistant' && index === messages.length - 1 ? onRegenerate : undefined}
+          chatMode={chatMode}
         />
       ))}
 

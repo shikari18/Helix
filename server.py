@@ -626,7 +626,6 @@ async def api_update_plan(request: Request):
     user = next((u for u in _users_registry if u["email"] == email), None)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
     user["plan"] = plan
     save_users()
     return user
@@ -640,6 +639,57 @@ async def api_register_user(req: dict):
         raise HTTPException(status_code=400, detail="Email required")
     user = register_or_update_user(email, name, picture)
     return user
+
+@app.post("/api/agent/open-folder")
+async def api_open_folder(req: dict):
+    folder = req.get("folder_name", "").lower()
+    try:
+        if folder == "screenshots":
+            path = Path.home() / "Pictures" / "Screenshots"
+        elif folder == "downloads":
+            path = Path.home() / "Downloads"
+        elif folder == "documents":
+            path = Path.home() / "Documents"
+        else:
+            # Default to explorer or specific path if provided
+            subprocess.Popen(["explorer.exe"])
+            return {"success": True}
+            
+        if path.exists():
+            subprocess.Popen(["explorer.exe", str(path)])
+        else:
+            subprocess.Popen(["explorer.exe"])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/agent/open-app")
+async def api_open_app(req: dict):
+    app_name = req.get("app_name", "").lower()
+    try:
+        apps = {
+            "chrome": "chrome.exe",
+            "notepad": "notepad.exe",
+            "calc": "calc.exe",
+            "calculator": "calc.exe",
+            "explorer": "explorer.exe",
+            "cmd": "cmd.exe",
+            "powershell": "powershell.exe"
+        }
+        target = apps.get(app_name, app_name)
+        subprocess.Popen(f"start {target}", shell=True)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/agent/wifi-scan")
+async def api_wifi_scan():
+    try:
+        # Simple windows wifi scan simulation/call
+        result = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True)
+        return {"success": True, "output": result.stdout}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.post("/api/auth/check-blocked")
 async def api_check_blocked(req: dict):

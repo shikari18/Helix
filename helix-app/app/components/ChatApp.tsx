@@ -521,16 +521,16 @@ export default function ChatApp() {
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0])
           if (parsed.agent_action && parsed.action_type) {
-            // Auto-execute if it's a direct system command (open_folder, open_app, wifi_scan)
+            // Auto-execute if it's a direct system command (wifi_scan, open_folder, open_app, system_command)
             const autoExecTypes = ['wifi_scan', 'open_folder', 'open_app', 'system_command']
             if (autoExecTypes.includes(parsed.action_type)) {
               executeAgentAction(parsed.action_type, parsed.params || {})
+              // DO NOT return here, let it type the explanation (stripped of JSON)
+            } else {
+              setMessages(prev => prev.filter(m => m.content !== text || m.role !== 'user'))
+              setAgentPrompt({ actionType: parsed.action_type, message: parsed.message, originalMessage: text })
               return
             }
-            
-            setMessages(prev => prev.filter(m => m.content !== text || m.role !== 'user'))
-            setAgentPrompt({ actionType: parsed.action_type, message: parsed.message, originalMessage: text })
-            return
           }
         }
       } catch {}
@@ -1278,6 +1278,7 @@ export default function ChatApp() {
                   messagesEndRef={messagesEndRef}
                   typingMsgId={typingMsgId}
                   onRegenerate={handleRegenerate}
+                  chatMode={chatMode}
                 />
               </div>
 
