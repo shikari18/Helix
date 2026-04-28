@@ -32,13 +32,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop')
-    if (isDesktop) {
-      document.body.classList.add('is-desktop')
-    }
-  }, [])
-
   return (
     <html lang="en">
       <head>

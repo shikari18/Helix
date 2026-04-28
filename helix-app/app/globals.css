@@ -60,7 +60,7 @@ body {
 }
 
 /* Show only on desktop */
-:global(.is-desktop) .title-bar-drag {
+.is-desktop .title-bar-drag {
   display: block;
 }
 
