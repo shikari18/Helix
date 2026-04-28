@@ -1,13 +1,35 @@
 [
   {
-    "email": "zenithzone18@gmail.com",
-    "name": "Shikari",
+    "email": "darkai2026@gmail.com",
+    "name": "DARK",
     "plan": "free",
-    "signedUpAt": "2026-04-24T03:29:56.517153+00:00",
-    "lastActiveAt": "2026-04-25T08:17:47.853907+00:00",
+    "signedUpAt": "2026-04-27T16:07:05.646398+00:00",
+    "lastActiveAt": "2026-04-27T16:07:09.888548+00:00",
     "messageCount": 0,
-    "loginCount": 10,
+    "loginCount": 2,
+    "blocked": false,
+    "picture": null
+  },
+  {
+    "email": "zenithzone18@gmail.com",
+    "name": "Zenithzone18",
+    "plan": "free",
+    "signedUpAt": "2026-04-27T16:11:38.835686+00:00",
+    "lastActiveAt": "2026-04-28T11:25:04.302070+00:00",
+    "messageCount": 0,
+    "loginCount": 8,
     "blocked": false,
     "picture": "https://lh3.googleusercontent.com/a/ACg8ocKJhD8NGSlzHoIynB8d2q0WGKIDrWf4Ysa-JS2ANB2UAM87EoY=s96-c"
+  },
+  {
+    "email": "zonezenith18@gmail.com",
+    "name": "Shikari",
+    "plan": "free",
+    "signedUpAt": "2026-04-28T03:59:38.487969+00:00",
+    "lastActiveAt": "2026-04-28T03:59:38.487969+00:00",
+    "messageCount": 0,
+    "loginCount": 1,
+    "blocked": false,
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocIEsooyCiXe5aWnHTkhyv4jcdiCP-1Ra83W2hSWBGy271EU4A=s96-c"
   }
 ]
