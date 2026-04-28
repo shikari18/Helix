@@ -97,35 +97,56 @@ export default function SignupPage() {
 
   const handleGoogleLogin = async () => {
     setError('')
-    const google = (window as any).google
-    if (!google) { setError('Google login not ready. Please try again.'); return }
+    setLoading(true)
     
-    const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
-
-    google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '527264492890-pf88n280plhshr7q15f8j1dptqtl87ui.apps.googleusercontent.com',
-      ux_mode: isDesktop ? 'redirect' : 'popup', // Use redirect in desktop to avoid iframe issues
-      callback: async (response: any) => {
-        const payload = JSON.parse(atob(response.credential.split('.')[1]))
-        if (payload.email) {
-          fetch('/api/admin/register-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: payload.email, name: payload.given_name || payload.name || 'User', picture: payload.picture || null }) }).catch(() => {})
-        }
-        localStorage.setItem('helix_logged_in', 'true')
-        localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
-        localStorage.setItem('helix_user_email', payload.email || '')
-        localStorage.setItem('helix_user_picture', payload.picture || '')
-        setLoading(true)
-        setTimeout(() => router.push('/'), 800)
-      }
-    })
+    const clientId = '527264492890-pf88n280plhshr7q15f8j1dptqtl87ui.apps.googleusercontent.com'
+    const redirectUri = window.location.origin + '/signup'
     
-    // In desktop, the popup often fails, so we trigger the internal Google flow
-    if (isDesktop) {
-        google.accounts.id.prompt(); // Fallback to prompt if redirect is not preferred
-    } else {
-        google.accounts.id.prompt();
-    }
+    // Construct Google OAuth URL
+    const scope = encodeURIComponent('openid email profile')
+    const responseType = 'id_token'
+    const nonce = Math.random().toString(36).substring(2)
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&nonce=${nonce}`
+    
+    window.location.href = authUrl
   }
+
+  // Handle Google Redirect Response
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const params = new URLSearchParams(window.location.hash.substring(1))
+      const idToken = params.get('id_token')
+      
+      if (idToken) {
+        setLoading(true)
+        try {
+          const payload = JSON.parse(atob(idToken.split('.')[1]))
+          if (payload.email) {
+            fetch('/api/admin/register-user', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ 
+                email: payload.email, 
+                name: payload.given_name || payload.name || 'User', 
+                picture: payload.picture || null 
+              }) 
+            }).catch(() => {})
+          }
+          
+          localStorage.setItem('helix_logged_in', 'true')
+          localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
+          localStorage.setItem('helix_user_email', payload.email || '')
+          localStorage.setItem('helix_user_picture', payload.picture || '')
+          
+          router.push('/')
+        } catch (err) {
+          setError('Failed to process Google login.')
+          setLoading(false)
+        }
+      }
+    }
+  }, [router])
 
   const [showCountries, setShowCountries] = useState(false)
   const [countrySearch, setCountrySearch] = useState('')
