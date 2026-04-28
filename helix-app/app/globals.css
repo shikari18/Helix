@@ -118,8 +118,8 @@ body {
 /* --- LOGO --- */
 .helix-logo-container {
   position: relative;
-  width: 90px;
-  height: 90px;
+  width: 130px;
+  height: 130px;
   margin-bottom: 0;
   align-self: center;
   animation: slideDownFromTop 1.5s ease-out forwards;
@@ -207,7 +207,7 @@ body {
 }
 
 h1 {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 500;
   color: #fff;
   margin-bottom: 0;
@@ -531,7 +531,7 @@ h1 {
 }
 
 .message-content {
-  font-size: 17px; /* Reduced from 20px */
+  font-size: 20px; /* Reduced from 20px */
   line-height: 1.5; /* Reduced from 1.75 */
   color: #fff;
   max-width: 100%;
@@ -669,10 +669,10 @@ h1 {
 /* --- INPUT SECTION --- */
 .input-section {
   width: 100%;
-  max-width: 740px;
+  max-width: 890px;
   margin: 0 auto;
   align-self: center;
-  margin-bottom: 12px;
+  margin-bottom: 19px;
   position: relative;
 }
 
@@ -705,8 +705,8 @@ h1 {
   max-width: 1000px;
   margin: 0 auto;
   background: #1a1a1a;
-  border-radius: 20px;
-  padding: 14px 20px;
+  border-radius: 32px;
+  padding: 24px 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   transition: border-color 0.3s, box-shadow 0.3s;
   position: relative;
@@ -759,8 +759,8 @@ h1 {
 .input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: auto;
+  gap: 16px;
+  min-height: 140px;
   max-height: 400px;
 }
 
@@ -771,7 +771,7 @@ h1 {
 
 #messageInput {
   font-family: inherit;
-  font-size: 17px;
+  font-size: 20px;
   line-height: 1.5;
   padding: 0;
   margin: 0;
