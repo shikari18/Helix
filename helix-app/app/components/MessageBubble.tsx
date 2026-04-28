@@ -100,7 +100,23 @@ export default function MessageBubble({ message, isTyping, onRegenerate }: Props
   }
 
   // Assistant message
-  const parts = parseCodeBlocks(content)
+  let displayContent = content
+  let thought = ''
+  
+  const thoughtMatch = content.match(/<thought>([\s\S]*?)<\/thought>/)
+  if (thoughtMatch) {
+      thought = thoughtMatch[1].trim()
+      displayContent = content.replace(/<thought>[\s\S]*?<\/thought>/, '').trim()
+  }
+
+  const parts = parseCodeBlocks(displayContent)
+
+  const BrainIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.79-3.56 2.5 2.5 0 0 1 .5-4.78 2.5 2.5 0 0 1 .75-4.1 2.5 2.5 0 0 1 4-2.5Z"/>
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.79-3.56 2.5 2.5 0 0 0-.5-4.78 2.5 2.5 0 0 0-.75-4.1 2.5 2.5 0 0 0-4-2.5Z"/>
+    </svg>
+  )
 
   return (
     <div
@@ -108,6 +124,43 @@ export default function MessageBubble({ message, isTyping, onRegenerate }: Props
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* Persistent Reasoning Block */}
+      {thought && (
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div 
+                onClick={() => {}} // Could add local toggle state if needed, but per request it should show thought process
+                style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 10, 
+                    color: '#aaa',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    userSelect: 'none',
+                    width: 'fit-content'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <BrainIcon />
+                    <span>Reasoning</span>
+                </div>
+            </div>
+            
+            <div style={{ 
+                padding: '12px 16px', 
+                background: 'rgba(255,255,255,0.03)', 
+                borderLeft: '2px solid rgba(255,255,255,0.1)',
+                color: '#888',
+                fontSize: 15,
+                lineHeight: '1.6',
+                fontStyle: 'italic',
+                borderRadius: '0 8px 8px 0'
+            }}>
+                {thought}
+            </div>
+          </div>
+      )}
+
       <div ref={contentRef} style={{ fontSize: 20, lineHeight: 1.75, color: '#fff' }}>
         {parts.map((part, i) => {
           if (part.type === 'code') {
