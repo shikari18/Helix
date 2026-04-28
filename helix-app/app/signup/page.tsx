@@ -110,11 +110,12 @@ export default function SignupPage() {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&nonce=${nonce}&prompt=select_account`
     
     const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
+    
+    // Always use window.open for the "mini browser" experience
+    window.open(authUrl, 'GoogleLogin', 'width=500,height=650')
+    
     if (isDesktop) {
-        window.open(authUrl, 'GoogleLogin', 'width=500,height=650')
-        setLoading(false) // Reset loading as user is in popup
-    } else {
-        window.location.href = authUrl
+        setLoading(false)
     }
   }
 
