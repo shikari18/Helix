@@ -55,6 +55,17 @@ export default function RegistryGuard({ children }: { children: React.ReactNode 
         router.push('/signup?logout=true&unauthorized=true')
         return
       }
+
+      // Enforce Paid Plan (Pro, Pro+, Ultra)
+      const plan = (user.plan || '').toLowerCase()
+      const allowedPlans = ['pro', 'proplus', 'ultra']
+      if (!allowedPlans.includes(plan)) {
+          localStorage.removeItem('helix_logged_in')
+          localStorage.removeItem('helix_user_email')
+          localStorage.removeItem('helix_plan')
+          router.push('/pricing?reason=paid_only')
+          return
+      }
     } catch (e) {
       console.error('Registry check failed', e)
     } finally {
