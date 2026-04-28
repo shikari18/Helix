@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { MessageCircle, CheckCircle, Download } from 'lucide-react'
 import { Sidebar } from '../components/AdminSidebar'
-import { AdminHeader } from '../components/AdminHeader'
+import AdminHeader from '../components/AdminHeader'
 import { useAdminAuth } from '../components/useAdminAuth'
 
 interface Feedback {

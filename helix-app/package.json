@@ -22,7 +22,12 @@
     "appId": "com.shikari.helix",
     "win": {
       "target": "nsis",
-      "icon": "build/image.ico"
+      "icon": "build/image.ico",
+      "publish": {
+        "provider": "github",
+        "owner": "shikari18",
+        "repo": "Helix"
+      }
     },
     "nsis": {
       "oneClick": true,
@@ -44,28 +49,29 @@
     ]
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron-updater": "^6.8.3",
+    "eslint-config-next": "16.2.4",
     "lucide-react": "^1.8.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "@tailwindcss/postcss": "^4",
+    "socket.io-client": "^4.5.0",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint-config-next": "16.2.4",
-    "socket.io-client": "^4.5.0"
+    "typescript": "^5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
     "eslint": "^9",
     "fast-check": "^4.7.0",
     "jest": "^30.3.0",
     "jsdom": "^29.0.2",
-    "ts-jest": "^29.4.9",
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "ts-jest": "^29.4.9"
   }
 }

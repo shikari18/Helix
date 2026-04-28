@@ -12,6 +12,7 @@ import GhostModeInfo from './GhostModeInfo'
 import ShareModal from './ShareModal'
 import LandingFooter from './LandingFooter'
 import GroupChatInterface from './GroupChatInterface'
+import SettingsOverlay from './SettingsOverlay'
 
 const GREETINGS = [
   'What are we breaking today, {name}?',
@@ -75,6 +76,17 @@ export default function ChatApp() {
   const [joinRoomCode, setJoinRoomCode] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [agentSteps, setAgentSteps] = useState<{ id: string; label: string; status: 'thinking' | 'done' | 'error'; thought?: string }[]>([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Sync sidebar state to body class so CSS can shift fixed input
+  useEffect(() => {
+    if (sidebarOpen && !isMobile) {
+      document.body.classList.add('sidebar-open')
+    } else {
+      document.body.classList.remove('sidebar-open')
+    }
+    return () => document.body.classList.remove('sidebar-open')
+  }, [sidebarOpen, isMobile])
 
   // Persist group chat state — restore on refresh
   useEffect(() => {
@@ -1097,6 +1109,7 @@ export default function ChatApp() {
           onLogout={handleLogout}
           onShareChat={() => setShareModalOpen(true)}
           onOpenGroupMenu={() => setShowGroupActionModal(true)}
+          onOpenSettings={() => { setSidebarOpen(false); setSettingsOpen(true) }}
           isMobile={isMobile}
           plan={plan || 'free'}
         />
@@ -1110,7 +1123,8 @@ export default function ChatApp() {
         height: '100vh', 
         overflow: 'hidden', 
         position: 'relative',
-        transition: 'flex 0.3s ease',
+        transition: 'flex 0.3s ease, margin-left 0.3s ease',
+        marginLeft: sidebarOpen && !isMobile ? 300 : 0,
       }}>
 
         {/* Landing navbar (logged out) */}
@@ -1381,6 +1395,9 @@ export default function ChatApp() {
           messages={messages}
         />
       )}
+
+      {/* Settings overlay */}
+      <SettingsOverlay isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Split view panel — opens on the right when a link is clicked */}
       {splitViewUrl && (

@@ -79,6 +79,11 @@ export default function ChatPage() {
       <SearchOverlay 
         isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
+        chatList={chatList}
+        onSelectChat={(id) => {
+          setCurrentChatId(id);
+          setSearchOpen(false);
+        }}
       />
 
       <VoiceSphereOverlay 

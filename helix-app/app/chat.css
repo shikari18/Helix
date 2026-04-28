@@ -2226,7 +2226,7 @@
             padding: 0 12px;
             height: 36px;
             background: #1a1a1a;
-            border: 1px solid #2d2d2d;
+            border: none;
             border-radius: 18px;
             color: #fff;
             font-size: 14px;
@@ -2239,11 +2239,11 @@
 
         .mode-pill:hover {
             background: #2a2a2a;
-            border-color: #505050;
+            border-color: transparent;
         }
 
         .mode-pill.agent-active {
-            border-color: #5a5aff;
+            border: none;
             color: #a0a0ff;
         }
 
@@ -2253,15 +2253,15 @@
             position: absolute;
             bottom: calc(100% + 10px);
             left: 0;
-            background: #141414;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-            padding: 10px;
-            min-width: 260px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            background: #1a1a1a;
+            border: none;
+            border-radius: 14px;
+            padding: 5px;
+            min-width: 200px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             display: none;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
             z-index: 200;
         }
 
@@ -2281,6 +2281,27 @@
 
         .mode-option:hover {
             background: #222;
+        }
+
+        .mode-option-agent {
+            background: #1a1a1a;
+            border: none;
+            color: #fff;
+        }
+
+        .mode-option-agent:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .mode-option-agent svg {
+            color: #a060ff !important;
+            width: 22px !important;
+            height: 22px !important;
+        }
+
+        .mode-option-agent .mode-option-title {
+            font-size: 18px;
         }
 
         .mode-option svg {
@@ -2303,7 +2324,7 @@
         /* --- INPUT AREA --- */
         .input-section {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1090px;
             margin: 0 auto;
             align-self: center;
             margin-bottom: 19px;
@@ -2324,6 +2345,10 @@
             box-shadow: 0 100px 0 100px #141414;
         }
 
+        body.sidebar-open .container.chat-active .input-section {
+            left: calc(50% + 150px);
+        }
+
         .container.chat-active .input-section::before {
             display: none;
         }
@@ -2341,7 +2366,7 @@
 
         .input-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1090px;
             margin: 0 auto;
             background: #1a1a1a;
             border-radius: 28px;

@@ -3,7 +3,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Shield, MessageSquare, Users, CreditCard, Activity, MessageCircle } from 'lucide-react'
 
 const NAV = [
-  { label: 'Access Control', icon: Shield, href: '/admin' },
+  { label: 'Overview', icon: Shield, href: '/admin' },
   { label: 'Messaging', icon: MessageSquare, href: '/admin/messaging' },
   { label: 'Accounts', icon: Users, href: '/admin/accounts' },
   { label: 'Plan Management', icon: CreditCard, href: '/admin/plans' },

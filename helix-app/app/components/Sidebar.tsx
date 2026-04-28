@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import SearchOverlay from './SearchOverlay'
 import type { ChatItem } from '../types'
 
 interface Props {
@@ -16,11 +17,12 @@ interface Props {
   onShareChat: () => void
   onLearnHacking?: () => void
   onOpenGroupMenu?: () => void
+  onOpenSettings?: () => void
   isMobile?: boolean
   plan?: string
 }
 
-export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onOpenGroupMenu, isMobile = false, plan = 'free' }: Props) {
+export default function Sidebar({ open, onClose, chatList, setChatList, currentChatId, onNewChat, onSelectChat, onLogout, onShareChat, onLearnHacking, onOpenGroupMenu, onOpenSettings, isMobile = false, plan = 'free' }: Props) {
   const getPlanName = () => {
     if (plan === 'ultra') return 'Ultra'
     if (plan === 'proplus') return 'Pro+'
@@ -28,12 +30,17 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
     return 'Free'
   }
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [showClearGroupsConfirm, setShowClearGroupsConfirm] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [menuY, setMenuY] = useState(0)
+
+  // Close context menu on outside click
+  const handleOutsideClick = (e: React.MouseEvent) => {
+    if (openMenuId) setOpenMenuId(null)
+  }
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
 
@@ -42,7 +49,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
   const userPicture = typeof window !== 'undefined' ? (localStorage.getItem('helix_user_picture') || '') : ''
   const userInitial = userName.charAt(0).toUpperCase()
   
-  const filtered = chatList.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filtered = chatList
   
   // Separate group chats from regular chats
   const groupChats = filtered.filter(c => c.isGroup === true)
@@ -63,10 +70,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
   }
 
   const ChatItem = ({ chat }: { chat: any }) => (
-    <div
-      style={{ position: 'relative' }}
-      onMouseLeave={() => setOpenMenuId(null)}
-    >
+    <div style={{ position: 'relative' }}>
       {renamingId === chat.id ? (
         <input
           autoFocus
@@ -101,7 +105,12 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
             {chat.pinned && '📌 '}{chat.title}
           </span>
           <button
-            onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === chat.id ? null : chat.id) }}
+            onClick={e => { 
+              e.stopPropagation()
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+              setMenuY(rect.top + rect.height / 2)
+              setOpenMenuId(openMenuId === chat.id ? null : chat.id)
+            }}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -113,11 +122,49 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
 
       {/* 3-dot dropdown */}
       {openMenuId === chat.id && (
-        <div style={{
-          position: 'absolute', right: 0, top: '100%', zIndex: 500,
-          background: '#1e1e1e', border: '1px solid #3d3d3d', borderRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.6)', minWidth: 160, overflow: 'hidden',
-        }}>
+        <>
+          <div onClick={() => setOpenMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 499 }} />
+          <div style={{
+            position: 'fixed',
+            left: 300,
+            top: menuY,
+            transform: 'translateY(-50%)',
+            zIndex: 500,
+            background: '#161616',
+            border: '1px solid #222',
+            borderLeft: 'none',
+            borderRadius: '0 12px 12px 0',
+            boxShadow: '10px 0 40px rgba(0,0,0,0.5)',
+            minWidth: 180,
+            overflow: 'visible',
+            animation: 'slideIn 0.15s ease-out',
+          }}>
+          <style>{`@keyframes slideIn { from { opacity: 0; transform: translateY(-50%) translateX(-10px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }`}</style>
+          {/* Arrow pointing left back to sidebar */}
+          <div style={{
+            position: 'absolute',
+            left: -8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 0,
+            height: 0,
+            borderTop: '8px solid transparent',
+            borderBottom: '8px solid transparent',
+            borderRight: '8px solid #222',
+          }} />
+          <div style={{
+            position: 'absolute',
+            left: -6,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 0,
+            height: 0,
+            borderTop: '7px solid transparent',
+            borderBottom: '7px solid transparent',
+            borderRight: '7px solid #161616',
+            zIndex: 1,
+          }} />
+          <div style={{ overflow: 'hidden', borderRadius: '0 12px 12px 0' }}>
           {[
             { label: 'Rename', icon: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, action: () => { setRenameValue(chat.title); setRenamingId(chat.id); setOpenMenuId(null) } },
             { label: chat.pinned ? 'Unpin' : 'Pin', icon: chat.pinned ? <><line x1="2" y1="2" x2="22" y2="22"/><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7"/><rect x="9" y="3" width="6" height="4" rx="1"/></> : <><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7"/><rect x="9" y="3" width="6" height="4" rx="1"/></>, action: () => { pinChat(chat.id); setOpenMenuId(null) } },
@@ -135,7 +182,9 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
               {item.label}
             </div>
           ))}
+          </div>
         </div>
+        </>
       )}
     </div>
   )
@@ -163,21 +212,43 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
       <div style={{
         position: 'fixed', top: 0, left: open ? 0 : -300,
         width: 300, height: '100vh',
-        background: '#111', borderRight: '1px solid #222',
+        background: '#141414', borderRight: '1px solid #222',
         transition: 'left 0.3s ease', zIndex: 200,
         display: 'flex', flexDirection: 'column',
       }}>
+        <style>{`
+          .sidebar-btn svg { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+          .sidebar-btn:hover svg { transform: scale(1.15) rotate(-5deg); }
+        `}</style>
         {/* Header */}
-        <div style={{ padding: '24px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>Helix</span>
-          <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>{getPlanName()}</span>
+        <div style={{ padding: '20px 16px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/image.png" alt="Helix" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <button 
+            onClick={onClose}
+            className="sidebar-btn"
+            style={{ 
+              background: 'none', border: 'none', cursor: 'pointer', 
+              color: '#666', padding: '4px', display: 'flex', 
+              alignItems: 'center', justifyContent: 'center',
+              transition: 'color 0.2s'
+            }}
+            onMouseOver={e => (e.currentTarget.style.color = '#fff')}
+            onMouseOut={e => (e.currentTarget.style.color = '#666')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
         </div>
 
         {/* New Chat */}
         <button
           onClick={onNewChat}
+          className="sidebar-btn"
           style={{
-            margin: '0 16px 8px', padding: '12px 16px', borderRadius: 12,
+            margin: '0 16px 8px', padding: '12px 16px', borderRadius: 30,
             border: 'none', background: 'transparent', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 10,
             fontSize: 14, fontWeight: 500, color: '#b0b0b0', fontFamily: 'inherit',
@@ -186,16 +257,17 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#2d2d2d'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
           onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#b0b0b0' }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M7 3 H13 M21 7 V17 Q21 21 17 21 H7 Q3 21 3 17 V7 Q3 3 7 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M8 15.5L15.5 8L16.5 9L9 16.5L7.5 17L8 15.5Z" fill="black" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3H6a5 5 0 0 0-5 5v11a5 5 0 0 0 5 5h11a5 5 0 0 0 5-5v-6" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
           New Chat
         </button>
 
         {/* Search */}
         <button
-          onClick={() => setSearchOpen(o => !o)}
+          onClick={() => setSearchModalOpen(true)}
+          className="sidebar-btn"
           style={{
             margin: '0 16px 8px', padding: '10px 14px', borderRadius: 10,
             border: 'none', background: 'transparent', cursor: 'pointer',
@@ -212,23 +284,13 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           Search
         </button>
 
-        {searchOpen && (
-          <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: '#2d2d2d', borderRadius: 10 }}>
-            <input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search chats..."
-              style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 14, fontFamily: 'inherit' }}
-            />
-          </div>
-        )}
-
         {/* Group Chat Section */}
         <button
           onClick={() => {
             onOpenGroupMenu?.()
             onClose()
           }}
+          className="sidebar-btn"
           style={{
             margin: '0 16px 8px', padding: '10px 14px', borderRadius: 10,
             border: 'none', background: 'transparent', cursor: 'pointer',
@@ -247,6 +309,8 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
 
         {/* Practice */}
         <button
+          onClick={() => { window.location.href = '/practice'; onClose() }}
+          className="sidebar-btn"
           style={{
             margin: '0 16px 8px', padding: '10px 14px', borderRadius: 10,
             border: 'none', background: 'transparent', cursor: 'pointer',
@@ -268,12 +332,15 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           <div style={{ padding: '0 12px 12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px 6px' }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5 }}>GROUP CHATS</span>
-              <button
-                onClick={() => setShowClearGroupsConfirm(true)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}
-              >
-                Clear
-              </button>
+              {showClearGroupsConfirm ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: '#888' }}>Clear all?</span>
+                  <button onClick={handleClearAllGroups} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#ff4444', fontWeight: 700, padding: '2px 4px' }}>Yes</button>
+                  <button onClick={() => setShowClearGroupsConfirm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#666', fontWeight: 600, padding: '2px 4px' }}>No</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowClearGroupsConfirm(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}>Clear</button>
+              )}
             </div>
             {groupChats.map(chat => <ChatItem key={chat.id} chat={chat} />)}
           </div>
@@ -283,12 +350,15 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 6px' }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5 }}>RECENT CHATS</span>
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}
-            >
-              Clear
-            </button>
+            {showClearConfirm ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10, color: '#888' }}>Clear all?</span>
+                <button onClick={handleClearAll} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#ff4444', fontWeight: 700, padding: '2px 4px' }}>Yes</button>
+                <button onClick={() => setShowClearConfirm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#666', fontWeight: 600, padding: '2px 4px' }}>No</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowClearConfirm(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#444', fontWeight: 600 }}>Clear</button>
+            )}
           </div>
           {regularChats.length === 0 ? (
             <div style={{ padding: '40px 20px', color: '#333', fontSize: 12, textAlign: 'center' }}>No chats yet</div>
@@ -305,7 +375,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
             onMouseOver={e => (e.currentTarget.style.background = '#1a1a1a')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <div style={{ width: 32, height: 32, borderRadius: 6, background: '#222', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: 12, flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#222', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: 12, flexShrink: 0 }}>
               {userPicture ? <img src={userPicture} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : userInitial}
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -358,7 +428,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
                   .menu-item:hover { background: #1a1a1a; color: #fff; }
                 `}</style>
 
-                <div className="menu-item" onClick={() => { setDropdownOpen(false); /* Open settings */ }}>
+                <div className="menu-item" onClick={() => { setDropdownOpen(false); onOpenSettings?.() }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/></svg>
                   Settings
                 </div>
@@ -370,7 +440,7 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
                   </div>
                 )}
 
-                <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('https://helix.com/learn', '_blank'); }}>
+                <div className="menu-item" onClick={() => { setDropdownOpen(false); window.open('/core', '_blank'); }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Learn more
                 </div>
@@ -386,6 +456,13 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           )}
         </div>
       </div>
+
+      <SearchOverlay
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        chatList={chatList}
+        onSelectChat={(id) => { onSelectChat(id); onClose() }}
+      />
     </>
   )
 }

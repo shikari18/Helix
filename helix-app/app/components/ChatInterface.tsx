@@ -63,7 +63,8 @@ export default function ChatInterface({
           message,
           history: messages,
           images,
-          deepThink: false
+          deepThink: false,
+          agentMode: chatMode === 'agent'
         })
       });
 

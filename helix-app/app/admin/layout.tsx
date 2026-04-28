@@ -8,8 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div style={{
       width: '100vw',
-      height: '100vh',
-      overflow: 'hidden',
+      minHeight: '100vh',
       background: '#0a0a0a',
       display: 'flex',
       flexDirection: 'column',
@@ -17,8 +16,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <style>{`
         html, body { 
           width: 100%; 
-          height: 100%; 
-          overflow: hidden !important;
           margin: 0;
           padding: 0;
         }

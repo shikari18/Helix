@@ -12,13 +12,12 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'X-Admin-Secret': ADMIN_SECRET || '',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body)
     })
 
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (err) {
-    console.error('Admin update-plan proxy error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

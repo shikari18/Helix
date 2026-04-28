@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
 }
 
+import RegistryGuard from './components/RegistryGuard'
+
 export default function RootLayout({
   children,
 }: {
@@ -40,8 +42,10 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
-        <PWAInstaller />
-        {children}
+        <RegistryGuard>
+          <PWAInstaller />
+          {children}
+        </RegistryGuard>
       </body>
     </html>
   )

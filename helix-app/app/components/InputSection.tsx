@@ -118,6 +118,15 @@ export default function InputSection({
 
   const handleModeChange = (mode: ChatMode) => {
     if (mode === 'agent') {
+      const isActuallyDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
+      
+      // If already in desktop app, allow switching immediately
+      if (isActuallyDesktop) {
+        onChatModeChange(mode)
+        setModeDropdownOpen(false)
+        return
+      }
+
       if (isMobile) {
         onToast?.("Agent Mode is a high-resource feature currently only available on the Helix Desktop App. Please switch to a PC to use it.", 'warn')
         setModeDropdownOpen(false)
@@ -126,14 +135,6 @@ export default function InputSection({
       
       if (plan === 'free' || plan === 'pro') {
         setShowUpgradeProPopup(true)
-        setModeDropdownOpen(false)
-        return
-      }
-
-      // If already in desktop app, just switch mode
-      const isActuallyDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
-      if (isActuallyDesktop) {
-        onChatModeChange(mode)
         setModeDropdownOpen(false)
         return
       }
@@ -262,7 +263,7 @@ export default function InputSection({
                       { mode: 'chat' as ChatMode, label: 'Chat', icon: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/> },
                       { mode: 'agent' as ChatMode, label: 'Agent', icon: <><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="6" y1="8" x2="6" y2="8.01"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="6" y2="11.01"/><line x1="10" y1="11" x2="14" y2="11"/></> },
                     ].filter(opt => opt.mode !== chatMode).map(opt => (
-                      <div key={opt.mode} className="mode-option" onClick={() => handleModeChange(opt.mode)}>
+                      <div key={opt.mode} className={`mode-option${opt.mode === 'agent' ? ' mode-option-agent' : ''}`} onClick={() => handleModeChange(opt.mode)}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{opt.icon}</svg>
                         <div className="mode-option-content"><div className="mode-option-title">{opt.label}</div></div>
                       </div>

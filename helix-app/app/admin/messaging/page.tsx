@@ -1,123 +1,119 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Send, Users } from 'lucide-react'
-import { Sidebar } from '../components/AdminSidebar'
-import { AdminHeader } from '../components/AdminHeader'
+import { 
+  MessageSquare, Send, Bell, Users, 
+  Terminal, ArrowLeft, History,
+  Clock, CheckCircle, Calendar, UserCheck,
+  Search, Filter, ChevronDown
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '../components/useAdminAuth'
+import AdminHeader from '../components/AdminHeader'
 
-interface User { email: string; name: string }
-interface Broadcast { id: string; subject: string; body: string; sentAt: string; recipients: number }
+interface User { email: string; name: string; lastActiveAt: string; signedUpAt: string; }
 
-export default function Messaging() {
+export default function AdminMessaging() {
   useAdminAuth()
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
-  const [target, setTarget] = useState<'all' | 'specific'>('all')
-  const [selectedEmail, setSelectedEmail] = useState('')
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
+  const [targetType, setTargetType] = useState('all')
+  const [selectedUser, setSelectedUser] = useState('')
+  const [dateRange, setDateRange] = useState({ start: '', end: '' })
+  const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
-  const [toast, setToast] = useState('')
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/users').then(r => r.json()).then(d => setUsers(d.users || []))
-    const saved = localStorage.getItem('helix_admin_broadcasts')
-    if (saved) setBroadcasts(JSON.parse(saved))
   }, [])
 
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
-
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault()
-    if (!subject.trim() || !body.trim()) return
+  const handleSend = async () => {
+    if (!message) return
     setSending(true)
     try {
-      const recipients = target === 'all' ? users.map(u => u.email) : [selectedEmail]
-      for (const to of recipients) {
-        await fetch('/api/admin/send-email', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to, subject, body })
-        })
-      }
-      const newBroadcast: Broadcast = { id: Date.now().toString(), subject, body, sentAt: new Date().toLocaleString(), recipients: recipients.length }
-      const updated = [newBroadcast, ...broadcasts]
-      setBroadcasts(updated)
-      localStorage.setItem('helix_admin_broadcasts', JSON.stringify(updated))
-      setSubject(''); setBody('')
-      showToast(`Email sent to ${recipients.length} recipient(s)`)
-    } catch { showToast('Failed to send email') }
-    finally { setSending(false) }
+      await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType, targetEmail: selectedUser, dateRange, message })
+      })
+      alert('Transmission dispatched successfully.')
+      setMessage('')
+    } catch (e) {
+      alert('Failed to dispatch transmission.')
+    } finally {
+      setSending(false)
+    }
   }
 
+  const filteredUsers = users.filter(u => 
+    u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    u.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100%', background: '#0a0a0a', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: '#e5e7eb', overflow: 'hidden' }}>
-      {toast && <div style={{ position: 'fixed', top: 20, right: 20, background: '#1a2a4a', border: '1px solid #2a4a8a', borderRadius: 8, padding: '10px 18px', color: '#60a5fa', fontSize: 13, zIndex: 9999 }}>{toast}</div>}
-      <Sidebar />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <AdminHeader title="Messaging" />
-        <div style={{ flex: 1, display: 'flex', padding: '24px 32px', gap: 24, overflowY: 'auto' }}>
-          {/* Compose */}
-          <div style={{ flex: 1, maxWidth: 560 }}>
-            <div style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: 12, padding: 24 }}>
-              <h2 style={{ color: '#f3f4f6', fontSize: 15, fontWeight: 600, margin: '0 0 20px' }}>Compose Broadcast</h2>
-              <form onSubmit={handleSend}>
-                {/* Target */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>Recipients</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['all', 'specific'] as const).map(t => (
-                      <button key={t} type="button" onClick={() => setTarget(t)} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid', borderColor: target === t ? '#2563eb' : '#2a2a2a', background: target === t ? '#1a2a4a' : 'transparent', color: target === t ? '#60a5fa' : '#9ca3af', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
-                        {t === 'all' ? `All Users (${users.length})` : 'Specific User'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {target === 'specific' && (
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>Select User</label>
-                    <select value={selectedEmail} onChange={e => setSelectedEmail(e.target.value)} required={target === 'specific'} style={{ width: '100%', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', color: '#e5e7eb', fontSize: 13, outline: 'none' }}>
-                      <option value="">Select a user...</option>
-                      {users.map(u => <option key={u.email} value={u.email}>{u.name} ({u.email})</option>)}
-                    </select>
-                  </div>
-                )}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>Subject</label>
-                  <input value={subject} onChange={e => setSubject(e.target.value)} required placeholder="Email subject..." style={{ width: '100%', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', color: '#e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>Message</label>
-                  <textarea value={body} onChange={e => setBody(e.target.value)} required rows={6} placeholder="Write your message..." style={{ width: '100%', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', color: '#e5e7eb', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
-                </div>
-                <button type="submit" disabled={sending} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: sending ? '#1e3a6b' : '#2563eb', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: sending ? 'not-allowed' : 'pointer' }}>
-                  <Send size={14} /> {sending ? 'Sending...' : 'Send Broadcast'}
-                </button>
-              </form>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', padding: 40, fontFamily: 'Inter, sans-serif' }}>
+      <AdminHeader />
+
+      <style>{`
+        .glass-panel { background: #111; border: 1px solid #1a1a1a; border-radius: 20px; padding: 30px; }
+        .input-dark { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 10px; padding: 12px; color: #fff; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
+        .input-dark:focus { border-color: #333; }
+        .selector-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #1a1a1a; background: #0d0d0d; color: #444; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .selector-btn.active { background: #fff; color: #000; border-color: #fff; }
+      `}</style>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 30, maxWidth: 1400, margin: '0 auto' }}>
+        
+        <div className="glass-panel">
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: '#444', fontWeight: 800, letterSpacing: '0.1em', marginBottom: 16 }}>1. SELECT_TARGETING_PROTOCOL</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className={`selector-btn ${targetType === 'all' ? 'active' : ''}`} onClick={() => setTargetType('all')}><Users size={14} /> ALL_ENTITIES</button>
+              <button className={`selector-btn ${targetType === 'recent' ? 'active' : ''}`} onClick={() => setTargetType('recent')}><Clock size={14} /> RECENT_LOGINS</button>
+              <button className={`selector-btn ${targetType === 'date' ? 'active' : ''}`} onClick={() => setTargetType('date')}><Calendar size={14} /> BY_DATE</button>
+              <button className={`selector-btn ${targetType === 'specific' ? 'active' : ''}`} onClick={() => setTargetType('specific')}><UserCheck size={14} /> SPECIFIC_GMAIL</button>
             </div>
           </div>
 
-          {/* Recent */}
-          <div style={{ flex: 1, paddingRight: 32 }}>
-            <div style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: 12, padding: 24 }}>
-              <h2 style={{ color: '#f3f4f6', fontSize: 15, fontWeight: 600, margin: '0 0 20px' }}>Recent Broadcasts</h2>
-              {broadcasts.length === 0 ? (
-                <div style={{ color: '#6b7280', fontSize: 13, textAlign: 'center', padding: '32px 0' }}>No broadcasts sent yet</div>
-              ) : broadcasts.map(b => (
-                <div key={b.id} style={{ padding: '14px 0', borderBottom: '1px solid #1a1a1a' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ color: '#e5e7eb', fontSize: 13, fontWeight: 500 }}>{b.subject}</div>
-                    <div style={{ color: '#6b7280', fontSize: 11 }}>{b.sentAt}</div>
+          {targetType === 'specific' && (
+            <div style={{ marginBottom: 32, background: '#0d0d0d', padding: 20, borderRadius: 12, border: '1px solid #1a1a1a' }}>
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: 12, color: '#444' }} />
+                <input className="input-dark" placeholder="Search Gmail..." style={{ paddingLeft: 36 }} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              </div>
+              <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                {filteredUsers.slice(0, 10).map(u => (
+                  <div key={u.email} onClick={() => setSelectedUser(u.email)} style={{ padding: '10px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13, background: selectedUser === u.email ? '#fff' : 'transparent', color: selectedUser === u.email ? '#000' : '#888' }}>
+                    {u.email}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                    <Users size={11} style={{ color: '#6b7280' }} />
-                    <span style={{ color: '#6b7280', fontSize: 11 }}>{b.recipients} recipient(s)</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          )}
+
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: '#444', fontWeight: 800, letterSpacing: '0.1em', marginBottom: 16 }}>2. MESSAGE_PAYLOAD</div>
+            <textarea className="input-dark" style={{ minHeight: 180, resize: 'vertical' }} placeholder="Construct transmission..." value={message} onChange={e => setMessage(e.target.value)} />
           </div>
+
+          <button disabled={sending || !message} onClick={handleSend} style={{ width: '100%', padding: 20, borderRadius: 12, border: 'none', background: '#fff', color: '#000', fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (sending || !message) ? 0.5 : 1 }}>
+            {sending ? 'EXECUTING...' : 'DISPATCH_TRANSMISSION_>>'}
+            {!sending && <Send size={18} />}
+          </button>
         </div>
-      </main>
+
+        <div className="glass-panel" style={{ flex: 1 }}>
+             <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 20 }}>ACTIVE_NODE_PREVIEW</div>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {users.slice(0, 8).map(u => (
+                  <div key={u.email} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0d0d0d', padding: 12, borderRadius: 10 }}>
+                    <div style={{ fontSize: 12, color: '#fff' }}>{u.email}</div>
+                    <div style={{ fontSize: 10, color: '#444' }}>{u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : 'Inactive'}</div>
+                  </div>
+                ))}
+             </div>
+        </div>
+      </div>
     </div>
   )
 }

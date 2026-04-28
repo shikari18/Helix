@@ -29,10 +29,12 @@ USE_OWN_MODEL = False
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GEMMA_MODELS = [
+    "gemini-1.5-flash",
     "gemma-3-27b-it",
     "gemma-3-12b-it",
     "gemma-3-4b-it",
     "gemma-3-1b-it",
+    "gemini-1.5-pro",
 ]
 
 # ─────────────────────────────────────────────────────────────────────
@@ -40,7 +42,7 @@ GEMMA_MODELS = [
 # ─────────────────────────────────────────────────────────────────────
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct"
+OPENROUTER_MODEL = "google/gemma-2-9b-it:free"
 
 # ─────────────────────────────────────────────────────────────────────
 # CLOUDFLARE CONFIG (fallback)
@@ -111,20 +113,42 @@ def run_own_model(system_prompt: str, messages: list, max_tokens: int = 2048) ->
 # ─────────────────────────────────────────────────────────────────────
 def generate(system_prompt: str, messages: list, max_tokens: int = 2048) -> str:
     """
-    Main inference entry point.
-    Uses Gemma 3 models with auto-switching logic.
+    Main inference entry point with multi-provider fallback logic.
+    Order: OpenRouter (Llama) -> Gemini (Gemma) -> Cloudflare (Llama)
     """
     if USE_OWN_MODEL:
         return run_own_model(system_prompt, messages, max_tokens)
     
-    if not GEMINI_API_KEY:
-        raise Exception("GEMINI_API_KEY is not set.")
+    errors = []
 
-    try:
-        return _call_gemini(system_prompt, messages, max_tokens)
-    except Exception as e:
-        print(f"[Fatal] Inference failed: {e}")
-        raise
+    # 1. Try OpenRouter (Now Primary)
+    if OPENROUTER_API_KEY:
+        try:
+            return _call_openrouter(system_prompt, messages, max_tokens)
+        except Exception as e:
+            errors.append(f"OpenRouter failed: {str(e)}")
+            print(f"[Model] OpenRouter fallback triggered. Error: {e}")
+
+    # 2. Try Gemini / Gemma
+    if GEMINI_API_KEY:
+        try:
+            return _call_gemini(system_prompt, messages, max_tokens)
+        except Exception as e:
+            errors.append(f"Gemini failed: {str(e)}")
+            print(f"[Model] Gemini fallback triggered. Error: {e}")
+
+    # 3. Try Cloudflare
+    if CF_ACCOUNT_ID and CF_API_TOKEN:
+        try:
+            return _call_cloudflare(system_prompt, messages, max_tokens)
+        except Exception as e:
+            errors.append(f"Cloudflare failed: {str(e)}")
+            print(f"[Model] Cloudflare failed. Error: {e}")
+
+    # If all failed
+    error_msg = "All inference providers failed. " + " | ".join(errors)
+    print(f"[Fatal] {error_msg}")
+    raise Exception(error_msg)
 
 
 def generate_vision(system_prompt: str, user_text: str, image_bytes: list, max_tokens: int = 1024) -> str:
@@ -164,46 +188,69 @@ def _call_gemini(system_prompt: str, messages: list, max_tokens: int) -> str:
     if last_role == "model":
         contents.append({"role": "user", "parts": [{"text": "Please continue based on our history."}]})
 
-    errors = []
+    import random
     import time
-    for model in GEMMA_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        try:
-            resp = requests.post(
-                url,
-                json={
-                    "contents": contents,
-                    "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.7}
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=45
-            )
-            
-            if resp.status_code == 429:
-                print(f"[Gemma] {model} rate limited, switching...")
-                time.sleep(1)
-                continue
+
+    # Split keys if multiple are provided
+    keys = [k.strip() for k in GEMINI_API_KEY.split(",")] if GEMINI_API_KEY else []
+    if not keys:
+        raise Exception("No Gemini API keys found")
+
+    # Clone and shuffle models to spread the load across the "fleet"
+    model_fleet = list(GEMMA_MODELS)
+    random.shuffle(model_fleet)
+    random.shuffle(keys)
+
+    errors = []
+    
+    # Smart Rotation: Try each key with each model
+    for key in keys:
+        for model in model_fleet:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            try:
+                # Add a tiny jitter to avoid synchronized bursts
+                time.sleep(random.uniform(0.1, 0.3))
                 
-            if resp.status_code != 200:
-                err_text = resp.text[:200]
-                errors.append(f"{model} ({resp.status_code}): {err_text}")
+                resp = requests.post(
+                    url,
+                    json={
+                        "contents": contents,
+                        "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.7}
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=45
+                )
+                
+                if resp.status_code == 429:
+                    print(f"[SmartRotation] {model} with key {key[:8]}... rate limited. Rotating...")
+                    continue # Try next model or next key
+                    
+                if resp.status_code != 200:
+                    err_text = resp.text[:200]
+                    errors.append(f"{model} ({resp.status_code}): {err_text}")
+                    continue
+
+                data = resp.json()
+                if "candidates" not in data or not data["candidates"]:
+                    # Check for safety filter blocks
+                    if "promptFeedback" in data and data["promptFeedback"].get("blockReason"):
+                        print(f"[SmartRotation] {model} blocked for safety: {data['promptFeedback']['blockReason']}")
+                        # If blocked for safety, trying other models might not help, but let's continue the rotation
+                        continue
+                    errors.append(f"{model}: No candidates returned")
+                    continue
+                    
+                reply = data["candidates"][0]["content"]["parts"][0]["text"]
+                if reply:
+                    print(f"[SmartRotation] Success! Used {model} with key {key[:8]}...")
+                    return reply
+                    
+            except Exception as e:
+                errors.append(f"{model} on key {key[:8]} error: {str(e)}")
                 continue
 
-            data = resp.json()
-            if "candidates" not in data or not data["candidates"]:
-                errors.append(f"{model}: No candidates returned")
-                continue
-                
-            reply = data["candidates"][0]["content"]["parts"][0]["text"]
-            if reply:
-                print(f"[Gemma] Success with {model}")
-                return reply
-        except Exception as e:
-            errors.append(f"{model} error: {str(e)}")
-            continue
-
-    error_summary = " | ".join(errors)
-    raise Exception(f"All Gemma models failed. Details: {error_summary}")
+    error_summary = " | ".join(errors[-5:]) # Show last 5 errors
+    raise Exception(f"Gemma fleet exhausted. All models and keys failed. Last errors: {error_summary}")
 
 
 # ─────────────────────────────────────────────────────────────────────

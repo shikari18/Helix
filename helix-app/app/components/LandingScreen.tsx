@@ -90,6 +90,8 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
       gap: 0,
       marginTop: -140,
     }}>
+
+
       {/* Logo — hidden on mobile */}
       {!isMobile && (
         <div
@@ -103,7 +105,8 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
             cursor: 'pointer',
             marginBottom: 80,
             background: 'transparent',
-          }}          onClick={handleLogoClick}
+          }}
+          onClick={handleLogoClick}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >

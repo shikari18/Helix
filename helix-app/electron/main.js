@@ -1,4 +1,5 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -94,6 +95,22 @@ app.whenReady().then(() => {
       }
     });
   } catch (e) {}
+  // Auto-updater configuration
+  autoUpdater.autoDownload = true;
+  autoUpdater.checkForUpdatesAndNotify();
+
+  autoUpdater.on('update-available', () => {
+    console.log('[Updater] Update available.');
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    console.log('[Updater] Update downloaded; will install now.');
+    autoUpdater.quitAndInstall();
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('[Updater] Error:', err);
+  });
 });
 
 app.on('window-all-closed', () => {

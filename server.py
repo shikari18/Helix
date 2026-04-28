@@ -613,6 +613,24 @@ async def admin_get_users(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {"users": _users_registry}
 
+@app.post("/api/admin/update-plan")
+async def api_update_plan(request: Request):
+    if not ADMIN_SECRET or request.headers.get("x-admin-secret") != ADMIN_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    req = await request.json()
+    email = req.get("email")
+    plan = req.get("plan")
+    if not email or not plan:
+        raise HTTPException(status_code=400, detail="Email and Plan required")
+    
+    user = next((u for u in _users_registry if u["email"] == email), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user["plan"] = plan
+    save_users()
+    return user
+
 @app.post("/api/admin/register-user")
 async def api_register_user(req: dict):
     email = req.get("email")
@@ -640,6 +658,19 @@ async def api_welcome(req: dict):
 @app.post("/api/auth/check-session")
 async def api_check_session(req: dict):
     return {"valid": True}
+
+@app.post("/api/auth/heartbeat")
+async def api_heartbeat(req: dict):
+    email = req.get("email")
+    if not email:
+        return {"success": False}
+    
+    user = next((u for u in _users_registry if u["email"] == email), None)
+    if user:
+        user["lastActiveAt"] = datetime.now(timezone.utc).isoformat()
+        save_users()
+        return {"success": True}
+    return {"success": False}
 
 # ── OTP STORE (in-memory) ──
 import random as _random
@@ -780,6 +811,18 @@ async def api_send_otp(req: dict):
     code = str(_random.randint(100000, 999999))
     expires = datetime.now(timezone.utc) + timedelta(minutes=10)
     _otp_store[email] = {"code": code, "expires_at": expires}
+    
+    print(f"\n{'='*40}")
+    print(f"  [OTP GENERATED] {code} for {email}")
+    print(f"{'='*40}\n")
+    
+    success = send_otp_email(email, code)
+    if not success:
+        # We don't throw 500 here yet, just log it. 
+        # Actually, let's throw it so the user knows.
+        raise HTTPException(status_code=500, detail="Email delivery failed. Check SMTP credentials.")
+    
+    return {"status": "sent"}
 
     ok = send_otp_email(email, code)
     if not ok:

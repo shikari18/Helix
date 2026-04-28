@@ -645,7 +645,7 @@ h1 {
 /* --- INPUT SECTION --- */
 .input-section {
   width: 100%;
-  max-width: 800px;
+  max-width: 890px;
   margin: 0 auto;
   align-self: center;
   margin-bottom: 19px;
@@ -945,7 +945,7 @@ textarea::placeholder {
   padding: 0 16px;
   height: 40px;
   background: #1a1a1a;
-  border: 1px solid #333;
+  border: none;
   border-radius: 10px;
   color: #fff;
   font-size: 15px;
@@ -958,18 +958,18 @@ textarea::placeholder {
 
 .mode-pill:hover {
   background: #222;
-  border-color: #444;
+  border-color: transparent;
 }
 
 .mode-pill.agent-active {
   background: #222;
-  border-color: #fff;
+  border: none;
   color: #fff;
 }
 
 .mode-pill.agent-active:hover {
   background: rgba(120, 80, 200, 0.25);
-  border-color: rgba(160, 120, 255, 0.6);
+  border-color: transparent;
   box-shadow: 0 0 20px rgba(160, 120, 255, 0.3);
 }
 
@@ -982,12 +982,12 @@ textarea::placeholder {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  background: #141414;
-  border: 1px solid #333;
+  background: #1a1a1a;
+  border: none;
   border-radius: 12px;
-  padding: 6px;
+  padding: 5px;
   min-width: 140px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
   display: none;
   flex-direction: column;
   gap: 4px;
@@ -1012,6 +1012,27 @@ textarea::placeholder {
 .mode-option:hover {
   background: #222;
   color: #fff;
+}
+
+.mode-option-agent {
+  background: #1a1a1a;
+  border: none;
+  color: #fff;
+}
+
+.mode-option-agent:hover {
+  background: #222;
+  color: #fff;
+}
+
+.mode-option-agent svg {
+  color: #a060ff !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.mode-option-agent .mode-option-title {
+  font-size: 16px;
 }
 
 .mode-option svg {

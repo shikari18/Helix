@@ -35,22 +35,28 @@ export default function TopControls({ sidebarOpen, onToggleSidebar, onNewChat, o
         display: 'flex', gap: 12, alignItems: 'center',
         zIndex: 100, transition: 'left 0.3s ease',
       }}>
-        {/* Sidebar toggle */}
-        <button
-          onClick={onToggleSidebar}
-          style={{
-            width: 40, height: 40, borderRadius: 8,
-            border: '1px solid #3d3d3d', background: '#1a1a1a',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s', color: '#b0b0b0',
-          }}
-          onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#2d2d2d' }}
-          onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1a1a1a' }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
-          </svg>
-        </button>
+        {/* Minimalist Sidebar Toggle */}
+        {!sidebarOpen && (
+          <button
+            onClick={onToggleSidebar}
+            title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+            style={{ 
+              width: 36, height: 36,
+              background: '#1a1a1a', 
+              border: '1px solid #333', 
+              cursor: 'pointer', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', transition: 'all 0.2s',
+              borderRadius: '6px'
+            }}
+            onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#252525'; (e.currentTarget as HTMLElement).style.borderColor = '#444' }}
+            onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = '#1a1a1a'; (e.currentTarget as HTMLElement).style.borderColor = '#333' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        )}
 
         {/* New Chat — left side desktop, left side mobile only before chat */}
         {!sidebarOpen && !isGhostMode && !isGroupChat && (          <button

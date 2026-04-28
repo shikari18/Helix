@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const PRICES = {
-  monthly: { pro: 9, proPlus: 40, ultra: 200 },
-  yearly:  { pro: 15, proPlus: 33, ultra: 166 },
+  monthly: { pro: 20, proPlus: 90, ultra: 200 },
+  yearly:  { pro: 16, proPlus: 75, ultra: 166 },
 }
 
 const CheckIcon = () => (
@@ -101,7 +101,7 @@ export default function PricingPage() {
             <div style={{ fontSize: 14, color: '#666', marginBottom: 32, lineHeight: 1.5 }}>Essential tools for daily operations and personal growth.</div>
             <PlanButton planId="pro" label="Get Pro" />
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-              {['Extended daily usage limits', 'Practice mode access', 'Group collaboration', '2 image uploads per week'].map(f => (
+              {['Group chat', 'Practice mode', 'Basic AI model', '2 file uploads per week', 'Limited daily chat'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 500, color: '#999' }}><CheckIcon />{f}</li>
               ))}
             </ul>
@@ -120,7 +120,7 @@ export default function PricingPage() {
             <PlanButton planId="proplus" label="Get Pro+" />
             <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>Everything in Pro, plus:</div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-              {['Agent mode with daily refresh', '10 image uploads per week', 'Priority task execution'].map(f => (
+              {['Agent mode (with daily limit)', '10 file uploads per week', 'Priority task execution'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 500, color: '#999' }}><CheckIcon />{f}</li>
               ))}
             </ul>
@@ -136,9 +136,9 @@ export default function PricingPage() {
             </div>
             <div style={{ fontSize: 14, color: '#666', marginBottom: 32, lineHeight: 1.5 }}>Unlimited power for elite operators and power users.</div>
             <PlanButton planId="ultra" label="Get Ultra" />
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>Everything in Pro+, plus:</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>Everything in Pro & Pro+, plus:</div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-              {['Unlimited usage across all features', 'Exclusive early access to updates', 'Premium support channel'].map(f => (
+              {['Advanced AI model', 'Unlimited file uploads', 'Unlimited agent use', 'Early access to new features'].map(f => (
                 <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 500, color: '#999' }}><CheckIcon />{f}</li>
               ))}
             </ul>

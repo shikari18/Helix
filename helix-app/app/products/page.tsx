@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Download, Monitor, Apple, Terminal, Zap, Moon, Sun } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ArrowUp, Shield, Terminal, Code, Zap, Globe, Lock, Cpu, Network, Moon, Sun } from 'lucide-react'
 
 // --- Hooks for Animations ---
 function useScrollReveal() {
@@ -31,14 +31,26 @@ function useParallax() {
   }, [])
 }
 
-export default function DownloadPage() {
+export default function ProductsPage() {
   useScrollReveal()
   useParallax()
+  const [isFocused, setIsFocused] = useState(false)
+  const [inputValue, setInputValue] = useState('')
   const [isDark, setIsDark] = useState(true)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSearch = (query?: string) => {
+    const finalQuery = typeof query === 'string' ? query : inputValue;
+    const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true';
+    if (finalQuery.trim()) {
+      window.location.href = (isLoggedIn ? '/' : '/signup') + `?q=${encodeURIComponent(finalQuery.trim())}`;
+    } else {
+      window.location.href = isLoggedIn ? '/' : '/signup';
+    }
+  }
 
   // Effect to toggle body background to prevent white flashes in dark mode
   useEffect(() => {
-    document.title = 'Helix - Download';
     if (isDark) {
       document.body.style.backgroundColor = '#111111';
     } else {
@@ -131,6 +143,7 @@ export default function DownloadPage() {
         
         .delay-100 { transition-delay: 100ms; }
         .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
 
         .parallax-bg {
           transform: translateY(calc(var(--scroll) * 0.15px));
@@ -162,7 +175,6 @@ export default function DownloadPage() {
           gap: 12px;
           cursor: pointer;
           color: var(--hc-text-main);
-          text-decoration: none;
         }
 
         .hc-logo-icon {
@@ -195,7 +207,6 @@ export default function DownloadPage() {
           transition: all 0.3s ease;
           cursor: pointer;
           position: relative;
-          text-decoration: none;
         }
 
         .hc-nav-link::before {
@@ -256,7 +267,6 @@ export default function DownloadPage() {
           font-weight: 500;
           cursor: pointer;
           color: var(--hc-text-main);
-          text-decoration: none;
         }
 
         .hc-btn-solid {
@@ -269,10 +279,6 @@ export default function DownloadPage() {
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
         }
 
         .hc-btn-solid:hover {
@@ -282,12 +288,13 @@ export default function DownloadPage() {
 
         /* --- Hero --- */
         .hc-hero {
+          min-height: 100vh;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
+          padding: 6rem 2rem 2rem;
           position: relative;
-          padding: 12rem 2rem 4rem;
         }
 
         .hc-hero-bg {
@@ -305,12 +312,12 @@ export default function DownloadPage() {
 
         .hc-hero-text-block {
           display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
+          justify-content: space-between;
+          align-items: flex-end;
           width: 100%;
-          max-width: 1000px;
-          margin-bottom: 2rem;
+          max-width: 1200px;
+          margin-bottom: 5rem;
+          gap: 2rem;
         }
 
         .hc-hero-headline {
@@ -318,7 +325,9 @@ export default function DownloadPage() {
           line-height: 1.05;
           font-weight: 500;
           color: var(--hc-text-main);
-          margin-bottom: 1.5rem;
+          max-width: 700px;
+          text-align: left;
+          margin: 0;
         }
 
         .hc-hero-headline u {
@@ -330,23 +339,252 @@ export default function DownloadPage() {
           font-size: clamp(1.1rem, 1.5vw, 1.4rem);
           line-height: 1.6;
           color: var(--hc-text-sub);
+          max-width: 450px;
+          text-align: left;
+          margin: 0;
+          padding-bottom: 0.5rem;
+        }
+
+        /* --- Marquee --- */
+        .hc-marquee-wrapper {
+          width: 100vw;
+          overflow: hidden;
+          background: #000;
+          padding: 1.5rem 0;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
+        }
+
+        .hc-marquee {
+          display: flex;
+          white-space: nowrap;
+          animation: marquee 30s linear infinite;
+        }
+
+        .hc-marquee-item {
+          color: #ffffff;
+          font-size: 1.1rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 0 2rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .hc-marquee-item::after {
+          content: '•';
+          color: #555;
+        }
+
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
+
+        /* --- INPUT --- */
+        .hc-input-wrapper {
+          width: 100%;
+          max-width: 800px;
+          position: relative;
+          z-index: 10;
+        }
+
+        .hc-input-wrapper:focus-within {
+          z-index: 20;
+        }
+
+        .hc-input {
+          width: 100%;
+          background: var(--hc-input-bg);
+          border: 1px solid var(--hc-input-border);
+          border-radius: 32px;
+          padding: 1.5rem 4rem 1.5rem 2rem;
+          font-size: 1.25rem;
+          color: var(--hc-text-main);
+          outline: none;
+          transition: all 0.2s ease;
+        }
+
+        .hc-input:focus {
+          background: var(--hc-bg);
+          border-color: var(--hc-text-main);
+          box-shadow: 0 0 0 1px var(--hc-text-main), 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .hc-input::placeholder { color: var(--hc-text-muted); }
+
+        .hc-input-btn {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: var(--hc-btn-solid-bg);
+          color: var(--hc-btn-solid-text);
+          border: none;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .hc-input-btn:hover {
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .hc-pills {
+          display: flex;
+          gap: 1rem;
+          margin-top: 2rem;
+          flex-wrap: wrap;
+          justify-content: center;
+          max-width: 900px;
+        }
+
+        .hc-pill {
+          background: var(--hc-pill-bg);
+          border: 1px solid var(--hc-pill-border);
+          color: var(--hc-text-main);
+          padding: 0.75rem 1.25rem;
+          border-radius: 100px;
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+        }
+
+        .hc-pill:hover {
+          border-color: var(--hc-text-main);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* --- Full Width Feature --- */
+        .hc-feature {
+          padding: 8rem 4rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6rem;
+          max-width: 1600px;
+          margin: 0 auto;
+        }
+
+        .hc-feature.reverse {
+          flex-direction: row-reverse;
+        }
+
+        .hc-feature-text {
+          flex: 1;
           max-width: 600px;
+        }
+
+        .hc-feature-tag {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--hc-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 1.5rem;
+          display: block;
+        }
+
+        .hc-feature-title {
+          font-size: clamp(2.5rem, 4vw, 4rem);
+          font-weight: 700;
+          line-height: 1.1;
+          letter-spacing: -0.03em;
+          margin-bottom: 2rem;
+          color: var(--hc-text-main);
+        }
+
+        .hc-feature-desc {
+          font-size: 1.25rem;
+          color: var(--hc-text-sub);
+          line-height: 1.6;
+          margin-bottom: 3rem;
+        }
+
+        .hc-feature-visual {
+          flex: 1;
+          height: 600px;
+          border-radius: 32px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+        }
+
+        /* Animated Gradients for Visuals */
+        .grad-1 {
+          background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+          background-size: 400% 400%;
+          animation: gradientAnim 15s ease infinite;
+        }
+        
+        .grad-2 {
+          background: linear-gradient(-45deg, #12c2e9, #c471ed, #f64f59);
+          background-size: 400% 400%;
+          animation: gradientAnim 12s ease infinite;
+        }
+
+        @keyframes gradientAnim {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .visual-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255,255,255,0.1);
+          backdrop-filter: blur(40px);
+          -webkit-backdrop-filter: blur(40px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 3rem;
+          font-weight: 800;
+          letter-spacing: -0.05em;
+          text-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         /* --- Bento Grid --- */
         .hc-bento {
-          padding: 4rem 4rem;
+          padding: 8rem 4rem;
+          background: var(--hc-section-bg);
           transition: background-color 0.3s ease;
         }
 
         .hc-bento-container {
-          max-width: 1200px;
+          max-width: 1600px;
           margin: 0 auto;
+        }
+
+        .hc-bento-header {
+          font-size: 3rem;
+          font-weight: 700;
+          letter-spacing: -0.03em;
+          margin-bottom: 4rem;
+          text-align: center;
+          color: var(--hc-text-main);
         }
 
         .hc-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(2, 400px);
           gap: 2rem;
         }
 
@@ -370,10 +608,6 @@ export default function DownloadPage() {
 
         .hc-card.large {
           grid-column: span 2;
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-          padding: 4rem;
         }
 
         .hc-card-icon {
@@ -384,13 +618,9 @@ export default function DownloadPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 2rem;
+          margin-bottom: auto;
           color: var(--hc-text-main);
           transition: all 0.3s;
-        }
-
-        .hc-card.large .hc-card-icon {
-          margin-bottom: 1.5rem;
         }
 
         .hc-card:hover .hc-card-icon {
@@ -404,92 +634,37 @@ export default function DownloadPage() {
           font-weight: 700;
           letter-spacing: -0.02em;
           margin-bottom: 1rem;
+          margin-top: 2rem;
           color: var(--hc-text-main);
-        }
-
-        .hc-card.large .hc-card-title {
-          font-size: 2.5rem;
         }
 
         .hc-card-desc {
           font-size: 1.1rem;
           color: var(--hc-text-muted);
           line-height: 1.6;
-          margin-bottom: 2rem;
         }
 
-        .hc-card.large .hc-card-desc {
-          max-width: 400px;
-          margin-bottom: 0;
+        /* --- Huge CTA --- */
+        .hc-cta {
+          padding: 10rem 2rem;
+          text-align: center;
         }
 
-        /* --- Full Width Feature --- */
-        .hc-feature {
-          padding: 6rem 4rem;
-          margin: 4rem auto;
-          max-width: 1200px;
-          background: var(--hc-section-bg);
-          border-radius: 40px;
+        .hc-cta-title {
+          font-size: clamp(4rem, 8vw, 8rem);
+          font-weight: 800;
+          letter-spacing: -0.05em;
+          line-height: 1;
+          margin-bottom: 3rem;
+          background: linear-gradient(180deg, var(--hc-text-main), var(--hc-text-muted));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
-        .hc-feature-text {
-          width: 100%;
-        }
-
-        .hc-feature-tag {
-          font-size: 1rem;
-          font-weight: 600;
-          color: var(--hc-text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 1.5rem;
-          display: block;
-        }
-
-        .hc-feature-title {
-          font-size: clamp(2.5rem, 4vw, 4rem);
-          font-weight: 700;
-          line-height: 1.1;
-          letter-spacing: -0.03em;
-          margin-bottom: 4rem;
-          color: var(--hc-text-main);
-        }
-
-        .req-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 4rem;
-        }
-
-        .req-col h3 {
+        .hc-cta-btn {
           font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 1.5rem;
-          border-bottom: 2px solid var(--hc-text-main);
-          padding-bottom: 0.5rem;
-          display: inline-block;
-          color: var(--hc-text-main);
-        }
-
-        .req-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .req-list li {
-          color: var(--hc-text-sub);
-          font-size: 1.1rem;
-          line-height: 1.8;
-          display: flex;
-          align-items: flex-start;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .req-list strong {
-          color: var(--hc-text-main);
-          min-width: 80px;
+          padding: 1.5rem 4rem;
+          border-radius: 100px;
         }
 
         /* --- Footer --- */
@@ -497,7 +672,6 @@ export default function DownloadPage() {
           background: #000;
           color: #fff;
           padding: 8rem 4rem 4rem;
-          margin-top: 4rem;
         }
 
         .hc-footer-grid {
@@ -552,116 +726,97 @@ export default function DownloadPage() {
         }
 
         @media (max-width: 1024px) {
-          .hc-grid { grid-template-columns: 1fr; }
-          .hc-card.large { grid-column: span 1; flex-direction: column; align-items: flex-start; padding: 3rem; }
-          .hc-card.large .hc-card-desc { margin-bottom: 2rem; }
+          .hc-feature { flex-direction: column !important; padding: 4rem 2rem; }
+          .hc-feature-visual { width: 100%; height: 400px; }
+          .hc-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+          .hc-card.large { grid-column: span 1; }
           .hc-footer-grid { grid-template-columns: 1fr 1fr; }
+          .hc-hero-text-block { flex-direction: column; align-items: flex-start; }
         }
       `}</style>
 
       <div id="core-root" className={isDark ? 'hc-dark-theme' : ''}>
         
+        {/* --- SIDE NAV --- */}
+        <div className="hc-nav-links">
+          <a className="hc-nav-link" href="/core">Core</a>
+          <a className="hc-nav-link" href="/about">About</a>
+          <a className="hc-nav-link" href="/products">Products</a>
+          <a className="hc-nav-link" href="/api-docs">API</a>
+          <a className="hc-nav-link" href="/research">Research</a>
+          <a className="hc-nav-link" href="/download" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
 
-
-
+        {/* --- TOP NAV ACTIONS --- */}
+        <div style={{ position: 'fixed', top: '2rem', right: '3rem', zIndex: 1000 }}>
+          <button className="hc-btn-solid" onClick={() => window.location.href = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true' ? '/' : '/signup'}>Get Started</button>
+        </div>
 
         {/* --- HERO --- */}
-        <section className="hc-hero">
+        <section className="hc-hero" style={{ minHeight: '60vh', paddingBottom: '2rem' }}>
           <div className="hc-hero-bg parallax-bg"></div>
-          
+
           <div className="hc-hero-text-block reveal-on-scroll">
             <h1 className="hc-hero-headline serif-text">
-              Deploy <u>Helix</u> to your<br />local environment.
+              Our <u>Products</u>
             </h1>
             <p className="hc-hero-subheadline serif-text">
-              Get the desktop application for unrestricted, locally-accelerated intelligence and autonomous execution workflows.
+              From casual reconnaissance to autonomous enterprise red teaming, explore the Helix platform and its core capabilities designed for the frontier.
             </p>
           </div>
         </section>
 
-        {/* --- BENTO GRID FOR DOWNLOADS --- */}
-        <section className="hc-bento">
+        {/* --- BENTO GRID --- */}
+        <section className="hc-bento" style={{ paddingTop: '2rem' }}>
           <div className="hc-bento-container">
+            <h2 className="hc-bento-header reveal-on-scroll">The Platform</h2>
+
             <div className="hc-grid">
-              {/* Windows Card */}
+              {/* Card 1 (Large) */}
               <div className="hc-card large reveal-on-scroll">
-                <div>
-                  <div className="hc-card-icon"><Monitor size={32} /></div>
-                  <h3 className="hc-card-title">Helix Core for Windows</h3>
-                  <p className="hc-card-desc">
-                    Optimized for Windows 10/11. Includes direct API hooks for AMSI evasion and local EDR bypass testing environments.
-                  </p>
-                </div>
-                <a href="https://github.com/shikari18/Helix/releases/download/v1.0.0/helix-app.Setup.0.1.0.exe" className="hc-btn-solid" style={{ padding: '1.5rem 3rem', fontSize: '1.25rem', whiteSpace: 'nowrap' }}>
-                  <Download size={24} /> Download for Windows
-                </a>
-              </div>
-              
-              {/* macOS Card */}
-              <div className="hc-card reveal-on-scroll delay-100">
-                <div className="hc-card-icon"><Apple size={32} /></div>
-                <h3 className="hc-card-title">macOS</h3>
-                <p className="hc-card-desc">Universal binary for Intel & Apple Silicon. Native Metal acceleration for lightning-fast local LLM execution.</p>
-                <a href="#" className="hc-btn-solid" style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>Download Universal</a>
+                <div className="hc-card-icon"><Cpu size={32} /></div>
+                <h3 className="hc-card-title">Helix Core</h3>
+                <p className="hc-card-desc">
+                  Our flagship conversational intelligence engine. Helix Core synthesizes vulnerabilities, analyzes payloads, and assists in exploit development in real-time. Built specifically for offensive security operations with zero retention.
+                </p>
               </div>
 
-              {/* Linux Card */}
-              <div className="hc-card reveal-on-scroll delay-200">
-                <div className="hc-card-icon"><Terminal size={32} /></div>
-                <h3 className="hc-card-title">Linux</h3>
-                <p className="hc-card-desc">Available for Debian/Ubuntu (.deb) and portable AppImage formats. Headless modes available.</p>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: 'auto' }}>
-                  <a href="#" className="hc-btn-solid">.deb</a>
-                  <a href="#" className="hc-btn-solid" style={{ background: 'var(--hc-input-bg)', color: 'var(--hc-text-main)' }}>.AppImage</a>
-                </div>
+              {/* Card 2 */}
+              <div className="hc-card reveal-on-scroll delay-100">
+                <div className="hc-card-icon"><Lock size={32} /></div>
+                <h3 className="hc-card-title">Ghost Mode</h3>
+                <p className="hc-card-desc">
+                  An extension built for absolute privacy. Ghost mode ensures that no logs, session data, or telemetry ever hit our databases. Your research is entirely ephemeral.
+                </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="hc-card reveal-on-scroll">
+                <div className="hc-card-icon"><Network size={32} /></div>
+                <h3 className="hc-card-title">Agent Mode</h3>
+                <p className="hc-card-desc">
+                  Full autonomous execution. Deploy Helix to scan live networks, execute complex multi-step exploits, and pivot automatically upon failure.
+                </p>
+              </div>
+
+              {/* Card 4 (Large) */}
+              <div className="hc-card large reveal-on-scroll delay-100">
+                <div className="hc-card-icon"><Code size={32} /></div>
+                <h3 className="hc-card-title">Helix API</h3>
+                <p className="hc-card-desc">
+                  Integrate our uncensored reasoning engine directly into your automation pipelines, custom C2 frameworks, and vulnerability scanning tools. Access massive context windows and lightning-fast inference.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- SYSTEM REQUIREMENTS --- */}
-        <section className="hc-feature">
-          <div className="hc-feature-text reveal-on-scroll">
-            <span className="hc-feature-tag">System Parameters</span>
-            <h2 className="hc-feature-title serif-text">Deployment Requirements.</h2>
-            
-            <div className="req-grid">
-              
-              <div className="req-col">
-                <h3>Windows</h3>
-                <ul className="req-list">
-                  <li><strong>OS:</strong> Windows 10/11 (64-bit)</li>
-                  <li><strong>CPU:</strong> Quad-core Intel i5 / Ryzen 5</li>
-                  <li><strong>RAM:</strong> 8GB Minimum (16GB for Agent)</li>
-                  <li><strong>Storage:</strong> 2GB available space</li>
-                  <li><strong>GPU:</strong> DirectX 12 capable</li>
-                </ul>
-              </div>
-
-              <div className="req-col">
-                <h3>Apple</h3>
-                <ul className="req-list">
-                  <li><strong>OS:</strong> macOS 12.0 Monterey+</li>
-                  <li><strong>CPU:</strong> M1/M2/M3 or Intel i5</li>
-                  <li><strong>RAM:</strong> 8GB Unified Memory</li>
-                  <li><strong>Storage:</strong> 1.5GB available space</li>
-                  <li><strong>Engine:</strong> Native Metal support</li>
-                </ul>
-              </div>
-
-              <div className="req-col">
-                <h3>Linux</h3>
-                <ul className="req-list">
-                  <li><strong>OS:</strong> Ubuntu 20.04+ / Debian 11+</li>
-                  <li><strong>CPU:</strong> x64 or ARM64 architecture</li>
-                  <li><strong>RAM:</strong> 8GB Minimum</li>
-                  <li><strong>Storage:</strong> 2GB available space</li>
-                  <li><strong>Lib:</strong> glibc 2.31 or newer</li>
-                </ul>
-              </div>
-
-            </div>
-          </div>
+        {/* --- HUGE CTA --- */}
+        <section className="hc-cta">
+          <h2 className="hc-cta-title reveal-on-scroll">Start building with Helix.</h2>
+          <button className="hc-btn-solid hc-cta-btn reveal-on-scroll delay-100" onClick={() => window.location.href = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true' ? '/' : '/signup'}>
+            Launch Environment ↗
+          </button>
         </section>
 
         {/* --- FOOTER --- */}
@@ -673,26 +828,28 @@ export default function DownloadPage() {
                 AI tooling that puts security at the frontier. Built for defenders, researchers, and red teams worldwide.
               </p>
             </div>
-            
+
             <div className="hc-footer-col">
               <h4>Research</h4>
-              <a href="/research">Overview</a>
+              <a href="#">Overview</a>
               <a href="#">Index</a>
               <a href="#">Safety Standards</a>
             </div>
-            
+
             <div className="hc-footer-col">
               <h4>Products</h4>
-              <a href="/core">Helix Core</a>
-              <a href="/api-docs">API</a>
-              <a href="/products">Enterprise</a>
+              <a href="#">Helix Core</a>
+              <a href="#">API</a>
+              <a href="#">Enterprise</a>
+              <a href="#">Pricing</a>
             </div>
-            
+
             <div className="hc-footer-col">
               <h4>Company</h4>
-              <a href="/about">About Us</a>
+              <a href="#">About Us</a>
               <a href="#">News</a>
               <a href="#">Careers</a>
+              <a href="#">Contact</a>
             </div>
 
             <div className="hc-footer-col">
@@ -716,3 +873,4 @@ export default function DownloadPage() {
     </>
   )
 }
+

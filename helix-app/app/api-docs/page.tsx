@@ -1,0 +1,1061 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { ArrowUp, Shield, Terminal, Code, Zap, Globe, Lock, Cpu, Network, Moon, Sun } from 'lucide-react'
+
+// --- Hooks for Animations ---
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed')
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    )
+    document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+}
+
+function useParallax() {
+  useEffect(() => {
+    const handleScroll = () => {
+      document.body.style.setProperty('--scroll', window.scrollY.toString())
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+}
+
+export default function ApiDocsPage() {
+  useScrollReveal()
+  useParallax()
+  const [isFocused, setIsFocused] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+  const [isDark, setIsDark] = useState(true)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // --- API Key Management State ---
+  const [apiKeys, setApiKeys] = useState<{id: string, name: string, limit: string, key: string, date: string}[]>([])
+  const [newKeyName, setNewKeyName] = useState('')
+  const [newKeyLimit, setNewKeyLimit] = useState('100000')
+  const [isCreating, setIsCreating] = useState(false)
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null)
+  const [showPayment, setShowPayment] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('helix_api_keys')
+    if (saved) setApiKeys(JSON.parse(saved))
+  }, [])
+
+  const handleCreateKey = () => {
+    if (!newKeyName) return
+    setShowPayment(true)
+  }
+
+  const finalizeKeyCreation = () => {
+    const newKey = `hl_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`
+    const keyObj = {
+      id: Date.now().toString(),
+      name: newKeyName,
+      limit: newKeyLimit,
+      key: newKey,
+      date: new Date().toLocaleDateString()
+    }
+    const updated = [...apiKeys, keyObj]
+    setApiKeys(updated)
+    localStorage.setItem('helix_api_keys', JSON.stringify(updated))
+    setGeneratedKey(newKey)
+    setShowPayment(false)
+    setNewKeyName('')
+  }
+
+  const deleteKey = (id: string) => {
+    const updated = apiKeys.filter(k => k.id !== id)
+    setApiKeys(updated)
+    localStorage.setItem('helix_api_keys', JSON.stringify(updated))
+  }
+
+  const handleSearch = (query?: string) => {
+    const finalQuery = typeof query === 'string' ? query : inputValue;
+    const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true';
+    if (finalQuery.trim()) {
+      window.location.href = (isLoggedIn ? '/' : '/signup') + `?q=${encodeURIComponent(finalQuery.trim())}`;
+    } else {
+      window.location.href = isLoggedIn ? '/' : '/signup';
+    }
+  }
+
+  // Effect to toggle body background to prevent white flashes in dark mode
+  useEffect(() => {
+    if (isDark) {
+      document.body.style.backgroundColor = '#111111';
+    } else {
+      document.body.style.backgroundColor = '#ffffff';
+    }
+  }, [isDark]);
+
+  return (
+    <>
+      <style>{`
+        /* --- CSS Variables for Light/Dark Theme --- */
+        :root {
+          --hc-bg: #ffffff;
+          --hc-text-main: #000000;
+          --hc-text-sub: #333333;
+          --hc-text-muted: #666666;
+          --hc-input-bg: #f4f4f5;
+          --hc-input-bg-focus: #ffffff;
+          --hc-input-border: transparent;
+          --hc-input-border-focus: #000000;
+          --hc-nav-bg: rgba(255, 255, 255, 0.8);
+          --hc-card-bg: #ffffff;
+          --hc-card-border: rgba(0,0,0,0.05);
+          --hc-card-hover: rgba(0,0,0,0.08);
+          --hc-pill-bg: #ffffff;
+          --hc-pill-border: #e4e4e7;
+          --hc-btn-solid-bg: #000000;
+          --hc-btn-solid-text: #ffffff;
+          --hc-section-bg: #f9f9f9;
+        }
+
+        .hc-dark-theme {
+          --hc-bg: #111111;
+          --hc-text-main: #ffffff;
+          --hc-text-sub: #cccccc;
+          --hc-text-muted: #aaaaaa;
+          --hc-input-bg: #222222;
+          --hc-input-bg-focus: #1a1a1a;
+          --hc-input-border: #333333;
+          --hc-input-border-focus: #555555;
+          --hc-nav-bg: rgba(17, 17, 17, 0.8);
+          --hc-card-bg: #1a1a1a;
+          --hc-card-border: rgba(255,255,255,0.1);
+          --hc-card-hover: rgba(255,255,255,0.15);
+          --hc-pill-bg: #1a1a1a;
+          --hc-pill-border: #333333;
+          --hc-btn-solid-bg: #ffffff;
+          --hc-btn-solid-text: #000000;
+          --hc-section-bg: #161616;
+        }
+
+        /* --- Base & Resets --- */
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: var(--hc-bg) !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          display: block !important;
+          min-height: 100vh !important;
+          scroll-behavior: smooth;
+          transition: background-color 0.3s ease;
+        }
+        
+        #core-root {
+          background: var(--hc-bg);
+          color: var(--hc-text-main);
+          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          min-height: 100vh;
+          width: 100vw;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
+          transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- Scroll Animations --- */
+        .reveal-on-scroll {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .reveal-on-scroll.revealed {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+
+        .parallax-bg {
+          transform: translateY(calc(var(--scroll) * 0.15px));
+        }
+
+        /* --- Nav --- */
+        .hc-nav {
+          position: fixed;
+          top: 0;
+          width: 100%;
+          padding: 1.5rem 3rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: var(--hc-nav-bg);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          z-index: 1000;
+          border-bottom: 1px solid var(--hc-card-border);
+          transition: all 0.3s ease;
+        }
+        
+        .hc-logo {
+          font-size: 1.5rem;
+          font-weight: 800;
+          letter-spacing: -0.04em;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          color: var(--hc-text-main);
+        }
+
+        .hc-logo-icon {
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, var(--hc-btn-solid-bg), #666);
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--hc-btn-solid-text);
+        }
+
+        .hc-nav-links {
+          position: fixed;
+          top: 50%;
+          left: 2rem;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          align-items: flex-start;
+          z-index: 100;
+        }
+
+        .hc-nav-link {
+          color: var(--hc-text-sub);
+          font-weight: 500;
+          font-size: 1.1rem;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          position: relative;
+        }
+
+        .hc-nav-link::before {
+          content: '';
+          position: absolute;
+          left: -1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 2px;
+          background: var(--hc-text-main);
+          transition: width 0.3s ease;
+        }
+
+        .hc-nav-link:hover {
+          color: var(--hc-text-main);
+          padding-left: 0.5rem;
+        }
+
+        .hc-nav-link:hover::before {
+          width: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+          .hc-nav-links {
+            display: none;
+          }
+        }
+
+        .hc-nav-actions {
+          display: flex;
+          gap: 1.5rem;
+          align-items: center;
+        }
+
+        .hc-theme-toggle {
+          background: transparent;
+          border: 1px solid var(--hc-card-border);
+          color: var(--hc-text-main);
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .hc-theme-toggle:hover {
+          background: var(--hc-card-border);
+        }
+
+        .hc-btn-ghost {
+          background: none;
+          border: none;
+          font-size: 1rem;
+          font-weight: 500;
+          cursor: pointer;
+          color: var(--hc-text-main);
+        }
+
+        .hc-btn-solid {
+          background: var(--hc-btn-solid-bg);
+          color: var(--hc-btn-solid-text);
+          border: none;
+          padding: 0.7rem 1.5rem;
+          border-radius: 100px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .hc-btn-solid:hover {
+          transform: scale(1.05);
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- Hero --- */
+        .hc-hero {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 6rem 2rem 2rem;
+          position: relative;
+        }
+
+        .hc-hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: radial-gradient(circle at 50% 0%, var(--hc-card-border) 0%, transparent 70%);
+          overflow: hidden;
+        }
+
+        .serif-text {
+          font-family: "Times New Roman", Times, serif;
+          letter-spacing: -0.02em;
+        }
+
+        .hc-hero-text-block {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          width: 100%;
+          max-width: 1200px;
+          margin-bottom: 5rem;
+          gap: 2rem;
+        }
+
+        .hc-hero-headline {
+          font-size: clamp(3rem, 6vw, 5.5rem);
+          line-height: 1.05;
+          font-weight: 500;
+          color: var(--hc-text-main);
+          max-width: 700px;
+          text-align: left;
+          margin: 0;
+        }
+
+        .hc-hero-headline u {
+          text-decoration-thickness: 4px;
+          text-underline-offset: 6px;
+        }
+
+        .hc-hero-subheadline {
+          font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+          line-height: 1.6;
+          color: var(--hc-text-sub);
+          max-width: 450px;
+          text-align: left;
+          margin: 0;
+          padding-bottom: 0.5rem;
+        }
+
+        /* --- Marquee --- */
+        .hc-marquee-wrapper {
+          width: 100vw;
+          overflow: hidden;
+          background: #000;
+          padding: 1.5rem 0;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
+        }
+
+        .hc-marquee {
+          display: flex;
+          white-space: nowrap;
+          animation: marquee 30s linear infinite;
+        }
+
+        .hc-marquee-item {
+          color: #ffffff;
+          font-size: 1.1rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 0 2rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .hc-marquee-item::after {
+          content: '•';
+          color: #555;
+        }
+
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
+
+        /* --- INPUT --- */
+        .hc-input-wrapper {
+          width: 100%;
+          max-width: 800px;
+          position: relative;
+          z-index: 10;
+        }
+
+        .hc-input-wrapper:focus-within {
+          z-index: 20;
+        }
+
+        .hc-input {
+          width: 100%;
+          background: var(--hc-input-bg);
+          border: 1px solid var(--hc-input-border);
+          border-radius: 32px;
+          padding: 1.5rem 4rem 1.5rem 2rem;
+          font-size: 1.25rem;
+          color: var(--hc-text-main);
+          outline: none;
+          transition: all 0.2s ease;
+        }
+
+        .hc-input:focus {
+          background: var(--hc-bg);
+          border-color: var(--hc-text-main);
+          box-shadow: 0 0 0 1px var(--hc-text-main), 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .hc-input::placeholder { color: var(--hc-text-muted); }
+
+        .hc-input-btn {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: var(--hc-btn-solid-bg);
+          color: var(--hc-btn-solid-text);
+          border: none;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .hc-input-btn:hover {
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .hc-pills {
+          display: flex;
+          gap: 1rem;
+          margin-top: 2rem;
+          flex-wrap: wrap;
+          justify-content: center;
+          max-width: 900px;
+        }
+
+        .hc-pill {
+          background: var(--hc-pill-bg);
+          border: 1px solid var(--hc-pill-border);
+          color: var(--hc-text-main);
+          padding: 0.75rem 1.25rem;
+          border-radius: 100px;
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+        }
+
+        .hc-pill:hover {
+          border-color: var(--hc-text-main);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* --- Full Width Feature --- */
+        .hc-feature {
+          padding: 8rem 4rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6rem;
+          max-width: 1600px;
+          margin: 0 auto;
+        }
+
+        .hc-feature.reverse {
+          flex-direction: row-reverse;
+        }
+
+        .hc-feature-text {
+          flex: 1;
+          max-width: 600px;
+        }
+
+        .hc-feature-tag {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--hc-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 1.5rem;
+          display: block;
+        }
+
+        .hc-feature-title {
+          font-size: clamp(2.5rem, 4vw, 4rem);
+          font-weight: 700;
+          line-height: 1.1;
+          letter-spacing: -0.03em;
+          margin-bottom: 2rem;
+          color: var(--hc-text-main);
+        }
+
+        .hc-feature-desc {
+          font-size: 1.25rem;
+          color: var(--hc-text-sub);
+          line-height: 1.6;
+          margin-bottom: 3rem;
+        }
+
+        .hc-feature-visual {
+          flex: 1;
+          height: 600px;
+          border-radius: 32px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+        }
+
+        /* Animated Gradients for Visuals */
+        .grad-1 {
+          background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+          background-size: 400% 400%;
+          animation: gradientAnim 15s ease infinite;
+        }
+        
+        .grad-2 {
+          background: linear-gradient(-45deg, #12c2e9, #c471ed, #f64f59);
+          background-size: 400% 400%;
+          animation: gradientAnim 12s ease infinite;
+        }
+
+        @keyframes gradientAnim {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .visual-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255,255,255,0.1);
+          backdrop-filter: blur(40px);
+          -webkit-backdrop-filter: blur(40px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 3rem;
+          font-weight: 800;
+          letter-spacing: -0.05em;
+          text-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* --- Bento Grid --- */
+        .hc-bento {
+          padding: 8rem 4rem;
+          background: var(--hc-section-bg);
+          transition: background-color 0.3s ease;
+        }
+
+        .hc-bento-container {
+          max-width: 1600px;
+          margin: 0 auto;
+        }
+
+        .hc-bento-header {
+          font-size: 3rem;
+          font-weight: 700;
+          letter-spacing: -0.03em;
+          margin-bottom: 4rem;
+          text-align: center;
+          color: var(--hc-text-main);
+        }
+
+        .hc-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(2, 400px);
+          gap: 2rem;
+        }
+
+        .hc-card {
+          background: var(--hc-card-bg);
+          border-radius: 32px;
+          padding: 3rem;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+          border: 1px solid var(--hc-card-border);
+          transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .hc-card:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 20px 40px var(--hc-card-hover);
+        }
+
+        .hc-card.large {
+          grid-column: span 2;
+        }
+
+        .hc-card-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: var(--hc-input-bg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: auto;
+          color: var(--hc-text-main);
+          transition: all 0.3s;
+        }
+
+        .hc-card:hover .hc-card-icon {
+          background: var(--hc-text-main);
+          color: var(--hc-bg);
+          transform: scale(1.1) rotate(5deg);
+        }
+
+        .hc-card-title {
+          font-size: 2rem;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          margin-bottom: 1rem;
+          margin-top: 2rem;
+          color: var(--hc-text-main);
+        }
+
+        .hc-card-desc {
+          font-size: 1.1rem;
+          color: var(--hc-text-muted);
+          line-height: 1.6;
+        }
+
+        /* --- Huge CTA --- */
+        .hc-cta {
+          padding: 10rem 2rem;
+          text-align: center;
+        }
+
+        .hc-cta-title {
+          font-size: clamp(4rem, 8vw, 8rem);
+          font-weight: 800;
+          letter-spacing: -0.05em;
+          line-height: 1;
+          margin-bottom: 3rem;
+          background: linear-gradient(180deg, var(--hc-text-main), var(--hc-text-muted));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .hc-cta-btn {
+          font-size: 1.5rem;
+          padding: 1.5rem 4rem;
+          border-radius: 100px;
+        }
+
+        /* --- Footer --- */
+        .hc-footer {
+          background: #000;
+          color: #fff;
+          padding: 8rem 4rem 4rem;
+        }
+
+        .hc-footer-grid {
+          display: grid;
+          grid-template-columns: 2fr repeat(4, 1fr);
+          gap: 4rem;
+          max-width: 1600px;
+          margin: 0 auto;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          padding-bottom: 6rem;
+        }
+
+        .hc-footer-logo {
+          font-size: 2rem;
+          font-weight: 800;
+          margin-bottom: 1rem;
+        }
+
+        .hc-footer-text {
+          font-size: 1.1rem;
+          color: #888;
+          line-height: 1.6;
+          max-width: 300px;
+        }
+
+        .hc-footer-col h4 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          margin-bottom: 2rem;
+        }
+
+        .hc-footer-col a {
+          display: block;
+          color: #888;
+          text-decoration: none;
+          font-size: 1rem;
+          margin-bottom: 1rem;
+          transition: color 0.2s;
+        }
+
+        .hc-footer-col a:hover {
+          color: #fff;
+        }
+
+        .hc-footer-bottom {
+          display: flex;
+          justify-content: space-between;
+          padding-top: 3rem;
+          max-width: 1600px;
+          margin: 0 auto;
+          color: #666;
+        }
+
+        @media (max-width: 1024px) {
+          .hc-feature { flex-direction: column !important; padding: 4rem 2rem; }
+          .hc-feature-visual { width: 100%; height: 400px; }
+          .hc-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+          .hc-card.large { grid-column: span 1; }
+          .hc-footer-grid { grid-template-columns: 1fr 1fr; }
+          .hc-hero-text-block { flex-direction: column; align-items: flex-start; }
+        }
+      `}</style>
+
+      <div id="core-root" className={isDark ? 'hc-dark-theme' : ''}>
+        
+        {/* --- SIDE NAV --- */}
+        <div className="hc-nav-links">
+          <a className="hc-nav-link" href="/core">Core</a>
+          <a className="hc-nav-link" href="/about">About</a>
+          <a className="hc-nav-link" href="/products">Products</a>
+          <a className="hc-nav-link" href="/api-docs">API</a>
+          <a className="hc-nav-link" href="/research">Research</a>
+          <a className="hc-nav-link" href="/download" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+
+        {/* --- TOP NAV ACTIONS --- */}
+        <div style={{ position: 'fixed', top: '2rem', right: '3rem', zIndex: 1000 }}>
+          <button className="hc-btn-solid" onClick={() => window.location.href = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true' ? '/' : '/signup'}>Get Started</button>
+        </div>
+
+        {/* --- HERO --- */}
+        <section className="hc-hero" style={{ minHeight: '60vh', paddingBottom: '2rem' }}>
+          <div className="hc-hero-bg parallax-bg"></div>
+          
+          <div className="hc-hero-text-block reveal-on-scroll">
+            <h1 className="hc-hero-headline serif-text">
+              API <u>Reference</u>
+            </h1>
+            <p className="hc-hero-subheadline serif-text">
+              Integrate Helix directly into your custom tools, C2 frameworks, and automated vulnerability scanners.
+            </p>
+          </div>
+        </section>
+
+        {/* --- API CONTENT --- */}
+        <section className="hc-feature" style={{ padding: '4rem 2rem', background: 'var(--hc-section-bg)', borderRadius: '40px', margin: '4rem auto', maxWidth: '1200px' }}>
+          <div className="hc-feature-text reveal-on-scroll" style={{ maxWidth: '100%', textAlign: 'left' }}>
+            <h2 className="hc-feature-title serif-text" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>Authentication & Usage</h2>
+            
+            <p style={{ color: 'var(--hc-text-sub)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+              The Helix API uses standard Bearer token authentication. You can generate an API key from your account dashboard. Ensure you keep your keys secure and do not expose them in client-side code.
+            </p>
+
+            <div style={{ background: '#000', borderRadius: '16px', padding: '2rem', overflowX: 'auto', marginBottom: '3rem' }}>
+              <pre style={{ margin: 0, color: '#fff', fontSize: '1rem', lineHeight: 1.5, fontFamily: 'monospace' }}>
+<span style={{ color: '#ff79c6' }}>curl</span> https://api.helix.ai/v1/completions \<br/>
+  -H <span style={{ color: '#f1fa8c' }}>"Authorization: Bearer hl_test_12345"</span> \<br/>
+  -H <span style={{ color: '#f1fa8c' }}>"Content-Type: application/json"</span> \<br/>
+  -d <span style={{ color: '#f1fa8c' }}>'{`{
+    "model": "helix-2.0-offensive",
+    "prompt": "Analyze this shellcode for EDR hooks...",
+    "max_tokens": 1024,
+    "temperature": 0.2
+  }`}'</span>
+              </pre>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', width: '100%' }}>
+              <div style={{ textAlign: 'left' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--hc-text-main)' }}>Unrestricted Endpoints</h3>
+                <p style={{ color: 'var(--hc-text-sub)', fontSize: '1rem', lineHeight: 1.6 }}>
+                  All models accessible via the API are completely unrestricted. They will not refuse requests or inject safety warnings into responses, making them ideal for integration into automated exploit generation pipelines.
+                </p>
+              </div>
+
+              <div style={{ textAlign: 'left' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--hc-text-main)' }}>High Throughput</h3>
+                <p style={{ color: 'var(--hc-text-sub)', fontSize: '1rem', lineHeight: 1.6 }}>
+                  Our infrastructure is designed for low latency and high concurrency, supporting massive parallel scans and rapid context synthesis during live red team engagements.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* --- API KEY MANAGEMENT SECTION --- */}
+        <section className="reveal-on-scroll" style={{ padding: '8rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4rem' }}>
+            
+            {/* Left: Create Key */}
+            <div style={{ flex: 1, background: 'var(--hc-card-bg)', border: '1px solid var(--hc-card-border)', borderRadius: '32px', padding: '3rem' }}>
+              <h2 className="serif-text" style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>Create API Key</h2>
+              <p style={{ color: 'var(--hc-text-muted)', marginBottom: '2.5rem', fontSize: '1rem' }}>Generate a new key to authenticate your custom integrations. Choose a name and set a monthly usage limit.</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--hc-text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Key Name</label>
+                  <input 
+                    placeholder="e.g. Production Scanner"
+                    value={newKeyName}
+                    onChange={e => setNewKeyName(e.target.value)}
+                    style={{ width: '100%', background: 'var(--hc-input-bg)', border: '1px solid var(--hc-input-border)', borderRadius: '12px', padding: '14px', color: 'var(--hc-text-main)', fontSize: '1rem', outline: 'none' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--hc-text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Token Limit / Month</label>
+                  <select 
+                    value={newKeyLimit}
+                    onChange={e => setNewKeyLimit(e.target.value)}
+                    style={{ width: '100%', background: 'var(--hc-input-bg)', border: '1px solid var(--hc-input-border)', borderRadius: '12px', padding: '14px', color: 'var(--hc-text-main)', fontSize: '1rem', outline: 'none', appearance: 'none' }}
+                  >
+                    <option value="100000">100,000 Tokens ($10/mo)</option>
+                    <option value="500000">500,000 Tokens ($45/mo)</option>
+                    <option value="2000000">2,000,000 Tokens ($150/mo)</option>
+                    <option value="10000000">10,000,000 Tokens ($600/mo)</option>
+                  </select>
+                </div>
+                
+                <button 
+                  onClick={handleCreateKey}
+                  className="hc-btn-solid" 
+                  style={{ width: '100%', padding: '16px', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                >
+                  <Zap size={16} /> Create & Pay Monthly
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Key List */}
+            <div style={{ flex: 1.5 }}>
+              <h2 className="serif-text" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>Your API Keys</h2>
+              
+              {generatedKey && (
+                <div style={{ background: 'rgba(74, 222, 128, 0.1)', border: '1px solid #4ade80', borderRadius: '20px', padding: '2rem', marginBottom: '2rem', position: 'relative' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#4ade80', marginBottom: '12px', textTransform: 'uppercase' }}>Key Generated Successfully</div>
+                  <p style={{ color: 'var(--hc-text-sub)', fontSize: '13px', marginBottom: '16px' }}>Copy this key now. For security reasons, <b>you will not be able to see it again.</b></p>
+                  <div style={{ background: '#000', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <code style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>{generatedKey}</code>
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText(generatedKey); alert('Copied to clipboard!') }}
+                      style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      COPY
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => setGeneratedKey(null)}
+                    style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#4ade80', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {apiKeys.length === 0 ? (
+                  <div style={{ padding: '4rem', textAlign: 'center', border: '1px dashed var(--hc-card-border)', borderRadius: '32px', color: 'var(--hc-text-muted)' }}>
+                    No active keys found. Create one to get started.
+                  </div>
+                ) : (
+                  apiKeys.map(k => (
+                    <div key={k.id} style={{ background: 'var(--hc-card-bg)', border: '1px solid var(--hc-card-border)', borderRadius: '20px', padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ width: '40px', height: '40px', background: 'var(--hc-section-bg)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Lock size={18} color="var(--hc-text-muted)" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: 600 }}>{k.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--hc-text-muted)', marginTop: '2px' }}>
+                            Created: {k.date} • {parseInt(k.limit).toLocaleString()} Tokens/mo
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <code style={{ fontSize: '12px', color: 'var(--hc-text-muted)', background: 'var(--hc-section-bg)', padding: '4px 8px', borderRadius: '6px' }}>
+                          {k.key.substring(0, 8)}...
+                        </code>
+                        <button 
+                          onClick={() => deleteKey(k.id)}
+                          style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '4px' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- PAYMENT MODAL --- */}
+        {showPayment && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <div style={{ background: '#fff', color: '#000', width: '100%', maxWidth: '400px', borderRadius: '32px', padding: '3rem', textAlign: 'center', animation: 'modalIn 0.3s ease-out' }}>
+              <style>{`@keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+              <div style={{ width: '64px', height: '64px', background: '#f4f4f5', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <Shield size={32} color="#000" />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1rem' }}>Authorize Payment</h3>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '2rem' }}>
+                You are subscribing to the <b>{parseInt(newKeyLimit).toLocaleString()} Token</b> plan for your new API key.
+              </p>
+              
+              <div style={{ background: '#f9f9f9', borderRadius: '16px', padding: '20px', marginBottom: '24px', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '13px', color: '#888' }}>Total Monthly:</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800 }}>${newKeyLimit === '100000' ? '10.00' : newKeyLimit === '500000' ? '45.00' : newKeyLimit === '2000000' ? '150.00' : '600.00'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '13px', color: '#888' }}>Account:</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>•••• 4242</span>
+                </div>
+              </div>
+              
+              <button 
+                onClick={finalizeKeyCreation}
+                style={{ width: '100%', background: '#000', color: '#fff', border: 'none', borderRadius: '100px', padding: '16px', fontWeight: 700, cursor: 'pointer', marginBottom: '12px' }}
+              >
+                Confirm & Pay
+              </button>
+              <button 
+                onClick={() => setShowPayment(false)}
+                style={{ width: '100%', background: 'none', border: 'none', color: '#888', fontSize: '13px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- HUGE CTA --- */}
+        <section className="hc-cta">
+          <h2 className="hc-cta-title reveal-on-scroll">Start building with Helix.</h2>
+          <button className="hc-btn-solid hc-cta-btn reveal-on-scroll delay-100" onClick={() => window.location.href = typeof window !== 'undefined' && localStorage.getItem('helix_logged_in') === 'true' ? '/' : '/signup'}>
+            Launch Environment ↗
+          </button>
+        </section>
+
+        {/* --- FOOTER --- */}
+        <footer className="hc-footer">
+          <div className="hc-footer-grid reveal-on-scroll">
+            <div>
+              <div className="hc-footer-logo">HELIX</div>
+              <p className="hc-footer-text">
+                AI tooling that puts security at the frontier. Built for defenders, researchers, and red teams worldwide.
+              </p>
+            </div>
+            
+            <div className="hc-footer-col">
+              <h4>Research</h4>
+              <a href="#">Overview</a>
+              <a href="#">Index</a>
+              <a href="#">Safety Standards</a>
+            </div>
+            
+            <div className="hc-footer-col">
+              <h4>Products</h4>
+              <a href="#">Helix Core</a>
+              <a href="#">API</a>
+              <a href="#">Enterprise</a>
+              <a href="#">Pricing</a>
+            </div>
+            
+            <div className="hc-footer-col">
+              <h4>Company</h4>
+              <a href="#">About Us</a>
+              <a href="#">News</a>
+              <a href="#">Careers</a>
+              <a href="#">Contact</a>
+            </div>
+
+            <div className="hc-footer-col">
+              <h4>Policies</h4>
+              <a href="#">Terms of Use</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Security</a>
+            </div>
+          </div>
+          <div className="hc-footer-bottom reveal-on-scroll delay-100">
+            <span>© 2026 Helix. All rights reserved.</span>
+            <div style={{ display: 'flex', gap: '2rem' }}>
+              <span style={{ cursor: 'pointer' }}>Twitter</span>
+              <span style={{ cursor: 'pointer' }}>GitHub</span>
+              <span style={{ cursor: 'pointer' }}>LinkedIn</span>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+    </>
+  )
+}
+

@@ -1,190 +1,132 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Shield, Lock, Ban, Trash2, MoreHorizontal } from 'lucide-react'
-import { Sidebar } from './components/AdminSidebar'
-import { StatsCard } from './components/AdminStatsCard'
-import { AdminHeader } from './components/AdminHeader'
+import { 
+  Users, Activity, Zap, ShieldAlert, 
+  MessageSquare, Terminal, Server, Globe,
+  LayoutGrid, Settings, LogOut, BarChart3,
+  Cpu, Database, Globe2, Bell, Search,
+  Power, RefreshCw
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useAdminAuth } from './components/useAdminAuth'
+import AdminHeader from './components/AdminHeader'
 
-interface User {
-  email: string
-  name: string
-  plan: string
-  blocked: boolean
-  signedUpAt: string
-  lastActiveAt: string
-  loginCount: number
-  messageCount: number
-}
-
-export default function AccessControl() {
+export default function AdminBento() {
   useAdminAuth()
-  const [users, setUsers] = useState<User[]>([])
-  const [filtered, setFiltered] = useState<User[]>([])
+  const router = useRouter()
+  const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [toast, setToast] = useState('')
-  const [openMenu, setOpenMenu] = useState<string | null>(null)
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
-
-  useEffect(() => { fetchUsers() }, [])
+  const [maintenance, setMaintenance] = useState(false)
 
   useEffect(() => {
-    const close = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (!target.closest('[data-menu-btn]')) {
-        setOpenMenu(null)
-      }
-    }
-    document.addEventListener('click', close)
-    return () => document.removeEventListener('click', close)
+    fetch('/api/admin/users')
+      .then(r => r.json())
+      .then(d => {
+        setUsers(d.users || [])
+        setLoading(false)
+      })
   }, [])
-  async function fetchUsers() {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/admin/users')
-      const data = await res.json()
-      setUsers(data.users || [])
-      setFiltered(data.users || [])
-    } catch { showToast('Failed to load users') }
-    finally { setLoading(false) }
+
+  const stats = {
+    total: users.length,
+    ultra: users.filter(u => u.plan === 'ultra').length,
+    pro: users.filter(u => u.plan === 'pro' || !u.plan || u.plan === 'free').length,
+    blocked: users.filter(u => u.blocked).length
   }
 
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(''), 3000)
-  }
-
-  function handleSearch(q: string) {
-    const lower = q.toLowerCase()
-    setFiltered(users.filter(u => u.email.toLowerCase().includes(lower) || u.name.toLowerCase().includes(lower)))
-  }
-
-  async function blockUser(email: string) {
-    await fetch('/api/admin/block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
-    setUsers(prev => prev.map(u => u.email === email ? { ...u, blocked: true } : u))
-    setFiltered(prev => prev.map(u => u.email === email ? { ...u, blocked: true } : u))
-    showToast('User blocked')
-    setOpenMenu(null)
-  }
-
-  async function unblockUser(email: string) {
-    await fetch('/api/admin/unblock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
-    setUsers(prev => prev.map(u => u.email === email ? { ...u, blocked: false } : u))
-    setFiltered(prev => prev.map(u => u.email === email ? { ...u, blocked: false } : u))
-    showToast('User unblocked')
-    setOpenMenu(null)
-  }
-
-  async function deleteUser(email: string) {
-    await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
-    setUsers(prev => prev.filter(u => u.email !== email))
-    setFiltered(prev => prev.filter(u => u.email !== email))
-    showToast('User deleted')
-    setOpenMenu(null)
-  }
-
-  const total = users.length
-  const blocked = users.filter(u => u.blocked).length
-  const active = users.filter(u => !u.blocked).length
+  const BENTO_CARDS = [
+    { id: 'users', title: 'User Management', icon: Users, color: '#fff', size: 'large', data: `${stats.total} Total Entities`, path: '/admin/accounts' },
+    { id: 'traffic', title: 'Ultra Singularity', icon: Activity, color: '#fbbf24', size: 'small', data: `${stats.ultra} Nodes`, path: '/admin/accounts' },
+    { id: 'system', title: 'Pro Tier', icon: Cpu, color: '#60a5fa', size: 'small', data: `${stats.pro} Nodes`, path: '/admin/accounts' },
+    { id: 'revenue', title: 'Revenue Stream', icon: BarChart3, color: '#fff', size: 'medium', data: `$${(stats.pro * 29) + (stats.ultra * 199)}/mo`, path: '/admin/plans' },
+    { id: 'security', title: 'Security Alerts', icon: ShieldAlert, color: stats.blocked > 0 ? '#f87171' : '#fff', size: 'medium', data: `${stats.blocked} Revoked`, path: '/admin/accounts' },
+    { id: 'database', title: 'DB Clusters', icon: Database, color: '#fff', size: 'small', data: 'Healthy', path: '/admin/activity' },
+    { id: 'messages', title: 'AI Throughput', icon: MessageSquare, color: '#fff', size: 'large', data: '85k tokens/s', path: '/admin/messaging' },
+  ]
 
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100%', background: '#0a0a0a', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: '#e5e7eb', overflow: 'hidden' }}>
-      {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, background: '#1a2a4a', border: '1px solid #2a4a8a', borderRadius: 8, padding: '10px 18px', color: '#60a5fa', fontSize: 13, zIndex: 9999 }}>{toast}</div>
-      )}
-      <Sidebar />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <AdminHeader title="Access Control" onSearch={handleSearch} />
-        <div style={{ flex: 1, padding: '24px 32px', overflowY: 'auto' }}>
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: 20, marginBottom: 24 }}>
-            <StatsCard title="Total Gmail Accounts" value={total} icon={<Shield size={18} />} iconBg="#0f1a2e" />
-            <StatsCard title="Active Sessions" value={active} icon={<Lock size={18} />} iconBg="#0f2e1a" subtext="+12 today" />
-            <StatsCard title="Blocked Accounts" value={blocked} icon={<Ban size={18} />} iconBg="#2e0f0f" />
-          </div>
+    <div style={{ minHeight: '100vh', width: '100vw', background: '#0a0a0a', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif', padding: 40, boxSizing: 'border-box', overflowY: 'auto' }}>
+      <AdminHeader />
 
-          {/* Table */}
-          <div style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid #1f1f1f' }}>
-              <h2 style={{ color: '#f3f4f6', fontSize: 15, fontWeight: 600, margin: 0 }}>Gmail Accounts</h2>
-              <p style={{ color: '#6b7280', fontSize: 12, margin: '4px 0 0' }}>All registered accounts and their access status</p>
+      <style>{`
+        html, body { overflow: auto !important; height: auto !important; }
+        @keyframes bentoIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .bento-card {
+          background: #111; border: 1px solid #1a1a1a; border-radius: 20px;
+          padding: 24px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer; position: relative; overflow: hidden;
+          animation: bentoIn 0.6s ease both;
+        }
+        .bento-card:hover { border-color: #333; transform: scale(1.02); background: #161616; }
+        .bento-card:hover .icon-box { background: #fff; color: #000; }
+        .icon-box {
+          width: 40px; height: 40px; border-radius: 10px; background: #1a1a1a;
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 20px; transition: all 0.3s;
+        }
+        .grid-container {
+          display: grid; grid-template-columns: repeat(4, 1fr);
+          grid-auto-rows: 200px; gap: 20px; max-width: 1400px; margin: 0 auto;
+        }
+        .large { grid-column: span 2; grid-row: span 2; }
+        .medium { grid-column: span 2; }
+        .small { grid-column: span 1; }
+      `}</style>
+
+      {/* --- Main Dashboard Stats --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 20, maxWidth: 1400, margin: '0 auto 40px' }}>
+         <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 20, padding: 24 }}>
+           <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 12 }}>GLOBAL_NODES</div>
+           <div style={{ fontSize: 28, fontWeight: 800 }}>{loading ? '...' : stats.total}</div>
+         </div>
+         <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 20, padding: 24 }}>
+           <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 12 }}>SYSTEM_LATENCY</div>
+           <div style={{ fontSize: 28, fontWeight: 800 }}>12ms</div>
+         </div>
+         <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 20, padding: 24 }}>
+           <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 12 }}>API_REQUESTS</div>
+           <div style={{ fontSize: 28, fontWeight: 800 }}>{loading ? '...' : (stats.total * 42).toLocaleString()}</div>
+         </div>
+         <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 20, padding: 24 }}>
+           <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 12 }}>UPTIME_OS</div>
+           <div style={{ fontSize: 28, fontWeight: 800, color: '#4ade80' }}>99.99%</div>
+         </div>
+      </div>
+
+      {/* --- Bento Grid --- */}
+      <div className="grid-container">
+        {BENTO_CARDS.map((card, idx) => (
+          <div key={card.id} className={`bento-card ${card.size}`} style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => router.push(card.path)}>
+            <div className="icon-box">
+              <card.icon size={20} color={card.color} />
             </div>
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '48px 0', color: '#6b7280' }}>Loading...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 0', color: '#6b7280' }}>No accounts found</div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
-                    {['User', 'Plan', 'Logins', 'Messages', 'Status', 'Action'].map(h => (
-                      <th key={h} style={{ padding: '10px 16px', color: '#6b7280', fontWeight: 500, textAlign: 'left', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(user => (
-                    <tr key={user.email} style={{ borderBottom: '1px solid #161616', background: user.blocked ? 'rgba(239,68,68,0.04)' : 'transparent' }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: user.blocked ? '#3a1a1a' : '#1a2a4a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: user.blocked ? '#f87171' : '#60a5fa', fontWeight: 700, fontSize: 13 }}>
-                            {(user.name || user.email).charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ color: '#e5e7eb', fontWeight: 500 }}>{user.name || '—'}</div>
-                            <div style={{ color: '#6b7280', fontSize: 11 }}>{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: user.plan === 'ultra' ? '#2a1f0a' : user.plan === 'proplus' ? '#1a0f2e' : user.plan === 'pro' ? '#0f1a2e' : '#1a1a1a', color: user.plan === 'ultra' ? '#fbbf24' : user.plan === 'proplus' ? '#a78bfa' : user.plan === 'pro' ? '#60a5fa' : '#9ca3af', textTransform: 'uppercase' }}>
-                          {user.plan || 'free'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: '#9ca3af' }}>{user.loginCount || 0}</td>
-                      <td style={{ padding: '12px 16px', color: '#9ca3af' }}>{user.messageCount || 0}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: user.blocked ? 'rgba(239,68,68,0.15)' : 'rgba(74,222,128,0.15)', color: user.blocked ? '#f87171' : '#4ade80' }}>
-                          {user.blocked ? 'Blocked' : 'Active'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', position: 'relative' }}>
-                        <button
-                          data-menu-btn="true"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                            const dropdownHeight = 90
-                            const spaceBelow = window.innerHeight - rect.bottom
-                            const top = spaceBelow < dropdownHeight ? rect.top - dropdownHeight : rect.bottom + 4
-                            setMenuPos({ top, right: window.innerWidth - rect.right })
-                            setOpenMenu(openMenu === user.email ? null : user.email)
-                          }}
-                          style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 4 }}
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-                        {openMenu === user.email && (
-                          <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8, zIndex: 9999, minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-                            {user.blocked ? (
-                              <button onClick={() => unblockUser(user.email)} style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: '#4ade80', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>Unblock</button>
-                            ) : (
-                              <button onClick={() => blockUser(user.email)} style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: '#f87171', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>Block</button>
-                            )}
-                            <button onClick={() => deleteUser(user.email)} style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: '#f87171', fontSize: 13, cursor: 'pointer', textAlign: 'left', borderTop: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <Trash2 size={13} /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ fontSize: 13, color: '#444', fontWeight: 800, marginBottom: 4 }}>{card.title.toUpperCase()}</div>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{card.data}</div>
+            
+            {card.id === 'security' && (
+              <div style={{ position: 'absolute', top: 20, right: 20, width: 8, height: 8, background: '#f87171', borderRadius: '50%', boxShadow: '0 0 10px #f87171' }} />
             )}
           </div>
+        ))}
+
+        {/* Maintenance Toggle */}
+        <div className="bento-card small" style={{ background: maintenance ? '#1a1111' : '#111', borderColor: maintenance ? '#451a1a' : '#1a1a1a' }}>
+           <div className="icon-box" style={{ background: maintenance ? '#f87171' : '#1a1a1a' }}>
+             <Power size={20} color={maintenance ? '#000' : '#fff'} />
+           </div>
+           <div style={{ fontSize: 11, color: '#444', fontWeight: 800, marginBottom: 12 }}>MAINTENANCE_MODE</div>
+           <button 
+            onClick={(e) => { e.stopPropagation(); setMaintenance(!maintenance) }}
+            style={{ 
+              background: maintenance ? '#f87171' : '#1a1a1a', 
+              color: maintenance ? '#000' : '#fff', 
+              border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 11, fontWeight: 800, cursor: 'pointer' 
+            }}
+           >
+             {maintenance ? 'DEACTIVATE' : 'ACTIVATE_PROTOCOL'}
+           </button>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
