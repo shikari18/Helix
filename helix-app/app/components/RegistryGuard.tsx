@@ -10,7 +10,10 @@ export default function RegistryGuard({ children }: { children: React.ReactNode 
     const email = localStorage.getItem('helix_user_email')
     const loggedIn = localStorage.getItem('helix_logged_in')
 
-    if (window.location.pathname.startsWith('/admin')) {
+    const publicPaths = ['/admin', '/signup', '/pricing', '/select-plan', '/download', '/terms', '/privacy', '/products', '/terms-of-service']
+    const isPublic = publicPaths.some(p => window.location.pathname.startsWith(p))
+
+    if (isPublic) {
       setChecking(false)
       return
     }

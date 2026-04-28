@@ -221,8 +221,8 @@ export default function Sidebar({ open, onClose, chatList, setChatList, currentC
           .sidebar-btn:hover svg { transform: scale(1.15) rotate(-5deg); }
         `}</style>
         {/* Header */}
-        <div style={{ padding: '20px 16px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ padding: '16px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="/image.png" alt="Helix" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <button 
