@@ -23,7 +23,7 @@ export default function RegistryGuard({ children }: { children: React.ReactNode 
         // Heartbeat every 30s
         const now = Date.now()
         if (now - lastHeartbeat > 30000) {
-          fetch('http://localhost:8000/api/auth/heartbeat', {
+          fetch('/api/auth/heartbeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
