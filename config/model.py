@@ -274,7 +274,7 @@ def _call_openrouter(system_prompt: str, messages: list, max_tokens: int) -> str
         headers={
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:3001",
+            "HTTP-Referer": "http://localhost:3000",
             "X-Title": "HELIX AI",
         },
         timeout=60

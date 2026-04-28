@@ -669,10 +669,10 @@ h1 {
 /* --- INPUT SECTION --- */
 .input-section {
   width: 100%;
-  max-width: 890px;
+  max-width: 740px;
   margin: 0 auto;
   align-self: center;
-  margin-bottom: 19px;
+  margin-bottom: 12px;
   position: relative;
 }
 
@@ -705,8 +705,8 @@ h1 {
   max-width: 1000px;
   margin: 0 auto;
   background: #1a1a1a;
-  border-radius: 24px;
-  padding: 16px 24px;
+  border-radius: 20px;
+  padding: 14px 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   transition: border-color 0.3s, box-shadow 0.3s;
   position: relative;

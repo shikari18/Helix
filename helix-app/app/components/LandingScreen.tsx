@@ -103,7 +103,7 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
             justifyContent: 'center',
             position: 'relative',
             cursor: 'pointer',
-            marginBottom: 80,
+            marginBottom: 40,
             background: 'transparent',
           }}
           onClick={handleLogoClick}
@@ -137,8 +137,8 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
             src="/image.png?v=2"
             alt="Helix"
             style={{
-              width: 110,
-              height: 110,
+              width: 80,
+              height: 80,
               objectFit: 'contain',
               display: 'block',
               mixBlendMode: 'screen',
@@ -171,7 +171,7 @@ export default function LandingScreen({ loggedIn, greeting: greetingProp, animat
       )}
 
       <h1 style={{
-        fontSize: loggedIn ? (isMobile ? 19 : 28) : 36,
+        fontSize: loggedIn ? (isMobile ? 18 : 24) : 32,
         fontWeight: 600,
         color: '#fff',
         textAlign: 'center',
