@@ -109,44 +109,73 @@ export default function SignupPage() {
     
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&nonce=${nonce}`
     
-    window.location.href = authUrl
+    const isDesktop = (window as any).helixDesktop?.isDesktop || navigator.userAgent.includes('HelixDesktop');
+    if (isDesktop) {
+        window.open(authUrl, 'GoogleLogin', 'width=500,height=650')
+        setLoading(false) // Reset loading as user is in popup
+    } else {
+        window.location.href = authUrl
+    }
   }
 
-  // Handle Google Redirect Response
+  // Handle Google Redirect Response & Message Listener
   useEffect(() => {
+    // 1. Listen for messages from popups
+    const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return
+        if (event.data?.type === 'google-auth-success' && event.data.idToken) {
+            processIdToken(event.data.idToken)
+        }
+    }
+    window.addEventListener('message', handleMessage)
+
+    // 2. Process hash if we are the redirect target
     if (typeof window !== 'undefined' && window.location.hash) {
       const params = new URLSearchParams(window.location.hash.substring(1))
       const idToken = params.get('id_token')
       
       if (idToken) {
-        setLoading(true)
-        try {
-          const payload = JSON.parse(atob(idToken.split('.')[1]))
-          if (payload.email) {
-            fetch('/api/admin/register-user', { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ 
-                email: payload.email, 
-                name: payload.given_name || payload.name || 'User', 
-                picture: payload.picture || null 
-              }) 
-            }).catch(() => {})
-          }
-          
-          localStorage.setItem('helix_logged_in', 'true')
-          localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
-          localStorage.setItem('helix_user_email', payload.email || '')
-          localStorage.setItem('helix_user_picture', payload.picture || '')
-          
-          router.push('/')
-        } catch (err) {
-          setError('Failed to process Google login.')
-          setLoading(false)
+        // If we are in a popup, tell the opener and close
+        if (window.opener && window.opener !== window) {
+            window.opener.postMessage({ type: 'google-auth-success', idToken }, window.location.origin)
+            // Wait a moment then close
+            setTimeout(() => window.close(), 500)
+            return
         }
+        processIdToken(idToken)
       }
     }
+
+    return () => window.removeEventListener('message', handleMessage)
   }, [router])
+
+  const processIdToken = async (idToken: string) => {
+    setLoading(true)
+    try {
+      const payload = JSON.parse(atob(idToken.split('.')[1]))
+      if (payload.email) {
+        fetch('/api/admin/register-user', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ 
+            email: payload.email, 
+            name: payload.given_name || payload.name || 'User', 
+            picture: payload.picture || null 
+          }) 
+        }).catch(() => {})
+      }
+      
+      localStorage.setItem('helix_logged_in', 'true')
+      localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
+      localStorage.setItem('helix_user_email', payload.email || '')
+      localStorage.setItem('helix_user_picture', payload.picture || '')
+      
+      router.push('/')
+    } catch (err) {
+      setError('Failed to process Google login.')
+      setLoading(false)
+    }
+  }
 
   const [showCountries, setShowCountries] = useState(false)
   const [countrySearch, setCountrySearch] = useState('')

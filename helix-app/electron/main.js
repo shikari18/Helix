@@ -57,6 +57,17 @@ function createWindow() {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://accounts.google.com/')) {
+      return { 
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 500,
+          height: 650,
+          autoHideMenuBar: true,
+          title: 'Sign in with Google'
+        }
+      };
+    }
     shell.openExternal(url);
     return { action: 'deny' };
   });
