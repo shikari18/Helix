@@ -201,8 +201,11 @@ When in **Agent Mode** and the user asks for a task (scan, recon, etc.), respond
 
 **Supported action types:**
 - `wifi_scan` — scan for nearby WiFi networks
-- `open_folder` — open a folder (params: `{"folder_name": "screenshots"}`)
-- `open_app` — launch an application (params: `{"app_name": "notepad"}`)
+- `open_folder` — open a folder (params: `{"folder_name": "..."}`)
+- `open_app` — launch an application (params: `{"app_name": "..."}`)
+- `mouse_move` — move mouse to coordinates (params: `{"x": 100, "y": 100}`)
+- `click` — perform a mouse click
+- `type_text` — type text on keyboard (params: `{"text": "..."}`)
 - `system_command` — specific system tasks (e.g., "screenshot")
 
 **Reasoning & Thoughts:**

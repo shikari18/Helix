@@ -23,6 +23,7 @@ import base64
 import subprocess
 import asyncio
 import socketio
+import pyautogui
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
@@ -688,6 +689,33 @@ async def api_wifi_scan():
         # Simple windows wifi scan simulation/call
         result = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True)
         return {"success": True, "output": result.stdout}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/agent/mouse-move")
+async def api_mouse_move(req: dict):
+    x = req.get("x", 0)
+    y = req.get("y", 0)
+    try:
+        pyautogui.moveTo(x, y, duration=0.5)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/agent/click")
+async def api_click():
+    try:
+        pyautogui.click()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/agent/type")
+async def api_type(req: dict):
+    text = req.get("text", "")
+    try:
+        pyautogui.write(text, interval=0.1)
+        return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
