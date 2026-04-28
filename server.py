@@ -23,7 +23,10 @@ import base64
 import subprocess
 import asyncio
 import socketio
-import pyautogui
+try:
+    import pyautogui
+except Exception:
+    pyautogui = None
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
@@ -694,6 +697,8 @@ async def api_wifi_scan():
 
 @app.post("/api/agent/mouse-move")
 async def api_mouse_move(req: dict):
+    if not pyautogui:
+        return {"success": False, "error": "Automation not supported in this environment (Desktop App only)"}
     x = req.get("x", 0)
     y = req.get("y", 0)
     try:
@@ -704,6 +709,8 @@ async def api_mouse_move(req: dict):
 
 @app.post("/api/agent/click")
 async def api_click():
+    if not pyautogui:
+        return {"success": False, "error": "Automation not supported in this environment (Desktop App only)"}
     try:
         pyautogui.click()
         return {"success": True}
@@ -712,6 +719,8 @@ async def api_click():
 
 @app.post("/api/agent/type")
 async def api_type(req: dict):
+    if not pyautogui:
+        return {"success": False, "error": "Automation not supported in this environment (Desktop App only)"}
     text = req.get("text", "")
     try:
         pyautogui.write(text, interval=0.1)
