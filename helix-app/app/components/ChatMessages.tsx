@@ -36,85 +36,107 @@ const REASONING_THOUGHTS = [
   "Enumerating Active Directory users..."
 ];
 
-function ReasoningBlock() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [thoughtIndex, setThoughtIndex] = React.useState(0);
-  const [displayText, setDisplayText] = React.useState('');
-  const [isDeleting, setIsDeleting] = React.useState(false);
+function ReasoningBlock({ thought, isThinking, label }: { thought: string, isThinking?: boolean, label?: string }) {
+  const [isOpen, setIsOpen] = React.useState(true);
 
-  React.useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    const currentThought = REASONING_THOUGHTS[thoughtIndex];
-    
-    if (isDeleting) {
-      if (displayText === '') {
-        setIsDeleting(false);
-        setThoughtIndex((prev) => (prev + 1) % REASONING_THOUGHTS.length);
-        timeout = setTimeout(() => {}, 500);
-      } else {
-        timeout = setTimeout(() => setDisplayText(displayText.slice(0, -1)), 30);
-      }
-    } else {
-      if (displayText === currentThought) {
-        timeout = setTimeout(() => setIsDeleting(true), 2000);
-      } else {
-        timeout = setTimeout(() => setDisplayText(currentThought.slice(0, displayText.length + 1)), 50);
-      }
-    }
+  const ClockIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isThinking ? 'spin 2s linear infinite' : 'none' }}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
 
-    return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, thoughtIndex]);
+  const CheckIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#4ade80' }}>
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
 
   return (
-    <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Header */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: 10, 
+          gap: 8, 
           cursor: 'pointer',
           color: '#aaa',
           fontSize: 14,
-          fontWeight: 500,
+          fontWeight: 400,
           userSelect: 'none',
           width: 'fit-content'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BrainIcon />
-            <span>Reasoning</span>
-        </div>
+        <span>{label || 'Analyzed user intent and prepared response'}</span>
         <svg 
-            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
         >
             <polyline points="6 9 12 15 18 9"/>
         </svg>
       </div>
       
-      {isOpen ? (
-        <div style={{ 
-            padding: '12px 16px', 
-            background: 'rgba(255,255,255,0.03)', 
-            borderLeft: '2px solid rgba(255,255,255,0.1)',
-            color: '#888',
-            fontSize: 15,
-            lineHeight: '1.6',
-            fontStyle: 'italic',
-            animation: 'slideDown 0.2s ease'
-        }}>
-            {displayText}
-            <span style={{ marginLeft: 2, display: 'inline-block', width: 2, height: 14, background: '#fff', animation: 'blink 0.8s infinite', verticalAlign: 'middle' }} />
+      {isOpen && (
+        <div style={{ position: 'relative', paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Vertical Line */}
+            <div style={{ 
+                position: 'absolute', 
+                left: 19.5, 
+                top: 24, 
+                bottom: 8, 
+                width: 1, 
+                background: 'rgba(255,255,255,0.1)' 
+            }} />
+
+            {/* Step */}
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div style={{ 
+                    marginTop: 4,
+                    width: 16, 
+                    height: 16, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    background: '#141414',
+                    zIndex: 1
+                }}>
+                    {isThinking ? <ClockIcon /> : <CheckIcon />}
+                </div>
+                <div style={{ 
+                    flex: 1,
+                    color: '#ccc',
+                    fontSize: 15,
+                    lineHeight: '1.6',
+                    fontWeight: 400
+                }}>
+                    {thought}
+                </div>
+            </div>
+
+            {!isThinking && (
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    <div style={{ 
+                        width: 16, 
+                        height: 16, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: '#141414',
+                        zIndex: 1
+                    }}>
+                        <CheckIcon />
+                    </div>
+                    <div style={{ color: '#888', fontSize: 14, fontWeight: 500 }}>
+                        Done
+                    </div>
+                </div>
+            )}
         </div>
-      ) : (
-          <div style={{ color: '#666', fontSize: 13, fontStyle: 'italic', paddingLeft: 28 }}>
-              {displayText}
-          </div>
       )}
       <style>{`
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
@@ -144,71 +166,14 @@ export default function ChatMessages({ messages, isThinking, isLoading, messages
           animation: 'fadeIn 0.3s ease'
         }}>
           {agentSteps.map((step) => (
-            <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {step.status === 'thinking' ? (
-                <div style={{
-                  width: 20,
-                  height: 20,
-                  border: '2.5px solid rgba(255,255,255,0.1)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                  flexShrink: 0
-                }} />
-              ) : step.status === 'done' ? (
-                <div style={{
-                  width: 20,
-                  height: 20,
-                  background: '#22c55e',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  animation: 'scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  flexShrink: 0
-                }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-              ) : (
-                <div style={{
-                  width: 20,
-                  height: 20,
-                  background: '#ef4444',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>!</span>
-                </div>
-              )}
-              
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                   {step.thought && (
-                     <span style={{ color: '#888', fontSize: 13, fontStyle: 'italic', letterSpacing: '0.02em' }}>
-                       {step.thought}
-                     </span>
-                   )}
-                   <span style={{ 
-                     color: step.status === 'done' ? '#fff' : '#aaa', 
-                     fontSize: 14, 
-                     fontWeight: 500,
-                     marginLeft: step.thought ? 10 : 0
-                   }}>
-                     {step.label}
-                   </span>
-                </div>
-              </div>
-            </div>
+            <ReasoningBlock key={step.id} thought={step.thought || step.label} isThinking={step.status === 'thinking'} label={step.label} />
           ))}
         </div>
       )}
 
-      {thinking && !agentSteps?.length && <ReasoningBlock />}
+      {thinking && (!agentSteps || agentSteps.length === 0) && (
+          <ReasoningBlock thought="Thinking..." isThinking={true} />
+      )}
 
       {messagesEndRef && <div ref={messagesEndRef} />}
     </div>
