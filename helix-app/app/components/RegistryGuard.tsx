@@ -59,11 +59,14 @@ export default function RegistryGuard({ children }: { children: React.ReactNode 
       // Enforce Paid Plan (Pro, Pro+, Ultra)
       const plan = (user.plan || '').toLowerCase()
       const allowedPlans = ['pro', 'proplus', 'ultra']
+      
+      // If they are on a free plan, redirect to pricing but DO NOT log them out
+      // This allows them to stay logged in while they pick a plan.
       if (!allowedPlans.includes(plan)) {
-          localStorage.removeItem('helix_logged_in')
-          localStorage.removeItem('helix_user_email')
-          localStorage.removeItem('helix_plan')
-          router.push('/pricing?reason=paid_only')
+          // If they are already on /pricing or /select-plan, let them be
+          if (!window.location.pathname.includes('/pricing') && !window.location.pathname.includes('/select-plan')) {
+              router.push('/pricing?reason=paid_only')
+          }
           return
       }
     } catch (e) {
