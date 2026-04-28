@@ -153,24 +153,30 @@ export default function SignupPage() {
     setLoading(true)
     try {
       const payload = JSON.parse(atob(idToken.split('.')[1]))
-      if (payload.email) {
-        fetch('/api/admin/register-user', { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify({ 
-            email: payload.email, 
-            name: payload.given_name || payload.name || 'User', 
-            picture: payload.picture || null 
-          }) 
-        }).catch(() => {})
-      }
-      
-      localStorage.setItem('helix_logged_in', 'true')
-      localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
-      localStorage.setItem('helix_user_email', payload.email || '')
-      localStorage.setItem('helix_user_picture', payload.picture || '')
-      
-      router.push('/')
+          if (payload.email) {
+            // Wait for registration to finish so RegistryGuard doesn't kick us out
+            await fetch('/api/admin/register-user', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ 
+                email: payload.email, 
+                name: payload.given_name || payload.name || 'User', 
+                picture: payload.picture || null 
+              }) 
+            }).catch(() => {})
+          }
+          
+          localStorage.setItem('helix_logged_in', 'true')
+          localStorage.setItem('helix_user_name', payload.given_name || payload.name || 'User')
+          localStorage.setItem('helix_user_email', payload.email || '')
+          localStorage.setItem('helix_user_picture', payload.picture || '')
+          
+          // Set a default plan so we don't get redirected to /pricing immediately
+          if (!localStorage.getItem('helix_plan')) {
+              localStorage.setItem('helix_plan', 'free')
+          }
+          
+          router.push('/')
     } catch (err) {
       setError('Failed to process Google login.')
       setLoading(false)

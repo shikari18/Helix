@@ -165,17 +165,14 @@ export default function ChatApp() {
     return null
   })
 
-  // Re-sync plan if localStorage changes (e.g. from pricing page)
+  // Re-sync plan if localStorage changes
   useEffect(() => {
-    if (loggedIn && !plan && typeof window !== 'undefined' && !window.location.pathname.includes('/pricing')) {
-        window.location.href = '/pricing'
-    }
       const interval = setInterval(() => {
           const current = localStorage.getItem('helix_plan')
           if (current !== plan) setPlan(current as any)
-      }, 1000)
+      }, 2000)
       return () => clearInterval(interval)
-  }, [plan, loggedIn])
+  }, [plan])
   const [pageTitle, setPageTitle] = useState(() => {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('helix_user_email') || 'guest'
