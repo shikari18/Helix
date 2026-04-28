@@ -78,14 +78,30 @@ function createWindow() {
 }
 
 function startPythonSidecar() {
-  const scriptPath = path.join(__dirname, '..', '..', 'server.py');
+  let scriptPath;
+  if (app.isPackaged) {
+    scriptPath = path.join(process.resourcesPath, 'server.py');
+  } else {
+    scriptPath = path.join(__dirname, '..', '..', 'server.py');
+  }
+
   const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  console.log(`[Desktop] Starting sidecar: ${pythonPath} ${scriptPath}`);
+  
   try {
     pythonProcess = spawn(pythonPath, [scriptPath], {
       env: { ...process.env, PORT: '8001' }
     });
-    pythonProcess.on('error', (err) => console.error('[Desktop] Sidecar failed:', err));
-  } catch (err) {}
+
+    pythonProcess.stdout.on('data', (data) => console.log(`[Sidecar] ${data}`));
+    pythonProcess.stderr.on('data', (data) => console.error(`[Sidecar Err] ${data}`));
+    
+    pythonProcess.on('error', (err) => {
+      console.error('[Desktop] Sidecar failed to start. Make sure Python is installed.', err);
+    });
+  } catch (err) {
+    console.error('[Desktop] Sidecar spawn error:', err);
+  }
 }
 
 app.whenReady().then(() => {

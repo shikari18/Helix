@@ -45,7 +45,11 @@
     },
     "files": [
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "../server.py",
+      "../config/**/*",
+      "../users.json",
+      "../rooms.json"
     ]
   },
   "dependencies": {
