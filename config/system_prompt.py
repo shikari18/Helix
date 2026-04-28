@@ -201,9 +201,13 @@ When in **Agent Mode** and the user asks for a task (scan, recon, etc.), respond
 
 **Supported action types:**
 - `wifi_scan` — scan for nearby WiFi networks
+- `open_folder` — open a folder (params: `{"folder_name": "screenshots"}`)
+- `open_app` — launch an application (params: `{"app_name": "notepad"}`)
+- `system_command` — specific system tasks (e.g., "screenshot")
 
 **Rules:**
-- Respond naturally first, then provide the JSON.
+- Respond naturally first, then provide the JSON block.
+- **Example for Folder:** `{"agent_action": true, "action_type": "open_folder", "params": {"folder_name": "screenshots"}, "message": "Opening your screenshots folder now."}`
 - If NOT in Agent Mode, explain how to do it manually and mention Agent Mode can automate it.
 - Agent Mode only operates on authorized targets, user's own network, or CTF/lab environments.
 

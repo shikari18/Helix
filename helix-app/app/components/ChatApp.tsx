@@ -362,6 +362,9 @@ export default function ChatApp() {
   const AGENT_ACTIONS: { pattern: RegExp; actionType: string }[] = [
     { pattern: /\b(scan|show|find|list|detect|check).*(wifi|wi-fi|wireless|network|ssid|hotspot)/i, actionType: 'wifi_scan' },
     { pattern: /\b(wifi|wi-fi|wireless|network).*(scan|around|available|nearby|list)/i, actionType: 'wifi_scan' },
+    { pattern: /\b(open|show|browse|explore).*(folder|directory|file explorer|explorer)/i, actionType: 'open_folder' },
+    { pattern: /\b(open|launch|start|run).*(app|application|program|software|chrome|notepad|calc|calculator)/i, actionType: 'open_app' },
+    { pattern: /\b(screenshot|take a screenshot|screen capture)/i, actionType: 'system_command' },
   ]
 
   const detectAgentIntent = (text: string): string | null => {
