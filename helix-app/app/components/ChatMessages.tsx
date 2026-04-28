@@ -52,6 +52,11 @@ function ReasoningBlock({ thought, isThinking, label }: { thought: string, isThi
     </svg>
   );
 
+  // Split thought into steps (by newline or specific markers)
+  const lines = thought.split('\n').filter(l => l.trim() !== '');
+  const header = label || (lines.length > 0 ? lines[0] : 'Thinking...');
+  const steps = lines.length > 1 ? lines.slice(1) : (lines.length === 1 && label ? [lines[0]] : []);
+
   return (
     <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Header */}
@@ -69,7 +74,9 @@ function ReasoningBlock({ thought, isThinking, label }: { thought: string, isThi
           width: 'fit-content'
         }}
       >
-        <span>{label || 'Analyzed user intent and prepared response'}</span>
+        <span style={{ maxWidth: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {header}
+        </span>
         <svg 
             width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
@@ -90,30 +97,59 @@ function ReasoningBlock({ thought, isThinking, label }: { thought: string, isThi
                 background: 'rgba(255,255,255,0.1)' 
             }} />
 
-            {/* Step */}
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                <div style={{ 
-                    marginTop: 4,
-                    width: 16, 
-                    height: 16, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    background: '#141414',
-                    zIndex: 1
-                }}>
-                    {isThinking ? <ClockIcon /> : <CheckIcon />}
+            {/* Steps */}
+            {steps.map((step, i) => (
+                <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                    <div style={{ 
+                        marginTop: 4,
+                        width: 16, 
+                        height: 16, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: '#141414',
+                        zIndex: 1
+                    }}>
+                        {(isThinking && i === steps.length - 1) ? <ClockIcon /> : <CheckIcon />}
+                    </div>
+                    <div style={{ 
+                        flex: 1,
+                        color: '#ccc',
+                        fontSize: 15,
+                        lineHeight: '1.6',
+                        fontWeight: 400
+                    }}>
+                        {step}
+                    </div>
                 </div>
-                <div style={{ 
-                    flex: 1,
-                    color: '#ccc',
-                    fontSize: 15,
-                    lineHeight: '1.6',
-                    fontWeight: 400
-                }}>
-                    {thought}
+            ))}
+
+            {/* If empty steps but thinking, show initial step */}
+            {steps.length === 0 && (
+                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                    <div style={{ 
+                        marginTop: 4,
+                        width: 16, 
+                        height: 16, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: '#141414',
+                        zIndex: 1
+                    }}>
+                        {isThinking ? <ClockIcon /> : <CheckIcon />}
+                    </div>
+                    <div style={{ 
+                        flex: 1,
+                        color: '#ccc',
+                        fontSize: 15,
+                        lineHeight: '1.6',
+                        fontWeight: 400
+                    }}>
+                        {thought}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {!isThinking && (
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
